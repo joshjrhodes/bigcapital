@@ -41,7 +41,15 @@ git checkout rpw && git rebase develop     # then rebuild images and re-run the 
 
 Phase 0 is done: the stack runs in Docker on the laptop from this fork's own code, with a test
 organization and a green end-to-end smoke test (`python3 rpw/scripts/smoke_test.py`).
-Next up is Phase 0.5 (backups) — see `PROJECT_BRIEF.md`.
+
+Phase 0.5 is done apart from one step only Josh can do: nightly backups run from cron, retention is
+30 daily + 12 monthly, and a restore drill into scratch databases passes (`RESTORE.md`). The Google
+Drive leg needs Josh to run `bash rpw/scripts/setup-gdrive.sh` once and click Allow — until then
+backups are local only.
+
+Next up is Phase 1 (real chart of accounts, branded invoice template, Zoho SMTP, Ohio county sales
+tax scaffolding) — see `PROJECT_BRIEF.md`. Phase 1 starts by wiping the Phase 0 test organization
+(`docker compose down -v`) so the real books begin clean.
 
 ## Verified stack (do not trust second-hand descriptions — this was checked against the repo)
 

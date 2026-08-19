@@ -102,6 +102,19 @@ do before building the real RPW chart of accounts.
 
 ---
 
+## Backups
+
+They run themselves nightly at 02:30 (and shortly after WSL starts, if the last one is stale).
+To take one right now, or to prove a backup can actually be restored:
+
+```bash
+bash rpw/scripts/backup.sh          # back up now
+bash rpw/scripts/restore.sh --drill # restore into scratch databases and verify — safe
+```
+
+Offsite sync to Google Drive needs one authorisation from you — `bash rpw/scripts/setup-gdrive.sh`.
+Full detail in `RESTORE.md`.
+
 ## Useful details
 
 - The app is bound to **127.0.0.1 only** — nothing on the coffee-shop wifi can reach it. Remote
