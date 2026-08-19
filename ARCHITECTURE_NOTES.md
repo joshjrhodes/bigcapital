@@ -179,18 +179,22 @@ Zoho SMTP in Phase 1 is therefore configuration, not code: `smtp.zoho.com`, port
 
 ---
 
-## 7. Attachments — the one real gap
+## 7. Attachments — object storage
 
 `modules/Attachments/` uploads exclusively to **S3-compatible object storage**
 (`S3UploadPipeline.ts`, `modules/S3/S3.module.ts`, `S3_*` env vars). There is no local-disk driver
-upstream. So "bill of sale attachments" (Phase 5) and organization logos need either:
+upstream, so the stack runs its own **MinIO** container (`docker-compose.rpw.yml`), with the bucket
+created on first boot by a one-shot `mc` container. Everything stays inside the compose network and
+inside one named volume (`rpw_minio`), which the backup script picks up automatically.
 
-- a small **MinIO** container with a named volume (self-hosted, no third party, ~100 MB RAM), or
-- a real S3 bucket (cheap, but off-box and another credential).
+`S3_FORCE_PATH_STYLE=true` is required: MinIO has no DNS-style buckets, and without it every upload
+goes to a hostname that does not exist.
 
-This is a Phase 1 decision, not a Phase 0 blocker — flagged for Josh. MinIO is the recommendation:
-it keeps everything inside the compose file and inside one named volume, matching the brief's
-host-portability rules.
+**Known limit:** `S3_ENDPOINT` is `http://minio:9000`, which the server and Gotenberg resolve but a
+browser cannot. Uploads work, and PDFs embed an uploaded logo (Gotenberg fetches it from inside the
+network), but a presigned URL handed to the browser will not load. Fixing it properly needs a
+public hostname for the object store, which is a Phase 2 concern — SigV4 signs the host, so the
+server and the browser have to agree on one name.
 
 ---
 

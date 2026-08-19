@@ -23,6 +23,7 @@ import sys
 import time
 import urllib.error
 import urllib.request
+from urllib.parse import quote
 from datetime import date, timedelta
 
 BASE_URL = os.environ.get("RPW_BASE_URL", "http://localhost:8080").rstrip("/")
@@ -38,9 +39,15 @@ ORG_ID = None
 RUN_ID = time.strftime("%Y%m%d-%H%M%S")
 
 
-def request(method, path, body=None, headers=None, raw=False, timeout=120):
+def request(
+    method, path, body=None, headers=None, raw=False, timeout=120, body_bytes=None
+):
     url = path if path.startswith("http") else f"{API}{path}"
-    data = json.dumps(body).encode() if body is not None else None
+    # body_bytes carries an already-encoded payload (multipart uploads); body is
+    # the usual JSON case.
+    data = body_bytes if body_bytes is not None else (
+        json.dumps(body).encode() if body is not None else None
+    )
     hdrs = {"Content-Type": "application/json"}
     if TOKEN:
         hdrs["Authorization"] = f"Bearer {TOKEN}"
@@ -568,6 +575,42 @@ def main():
     if not income:
         fail("the invoice did not post to income in the profit & loss report", totals)
     ok(f"P&L shows income {income} and net income {net} — the ledger is posting")
+
+    step("Attachments (object storage)")
+    import io
+    import uuid
+
+    png = bytes.fromhex(
+        "89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c489"
+        "0000000d4944415478da63f8cfc00000030101001836dd8f0000000049454e44ae426082"
+    )
+    boundary = "----rpw" + uuid.uuid4().hex
+    buffer = io.BytesIO()
+    buffer.write(f"--{boundary}\r\n".encode())
+    buffer.write(
+        b'Content-Disposition: form-data; name="file"; filename="smoke-test.png"\r\n'
+    )
+    buffer.write(b"Content-Type: image/png\r\n\r\n")
+    buffer.write(png)
+    buffer.write(f"\r\n--{boundary}--\r\n".encode())
+
+    status, uploaded = request(
+        "POST",
+        "/attachments",
+        headers={"Content-Type": f"multipart/form-data; boundary={boundary}"},
+        body_bytes=buffer.getvalue(),
+    )
+    if status not in (200, 201):
+        fail("could not upload an attachment — is object storage running?", uploaded)
+    file_key = pick(uploaded, "key")
+    if not file_key:
+        fail("the upload returned no storage key", uploaded)
+    ok(f"attachment stored in object storage ({file_key})")
+
+    status, resp = request("DELETE", f"/attachments/{quote(file_key, safe='')}")
+    if status not in (200, 204):
+        fail("could not delete the uploaded attachment", resp)
+    ok("attachment deleted again")
 
     step("RPW sales tax scaffolding (Ohio multi-county)")
     status, counties = request("GET", "/rpw/sales-tax/counties")

@@ -40,6 +40,14 @@ services:
     volumes: !override
       - redis:/data
 
+  minio:
+    container_name: rpwtest-minio
+    volumes: !override
+      - minio:/data
+
+  minio_init:
+    container_name: rpwtest-minio-init
+
   database_migration:
     container_name: rpwtest-database-migration
 
@@ -48,3 +56,8 @@ volumes:
     name: rpwtest_mysql
   redis:
     name: rpwtest_redis
+  # Without this the scratch stack would write test attachments straight into
+  # the real object store — the volume names in the base files are fixed and
+  # ignore the compose project prefix.
+  minio:
+    name: rpwtest_minio

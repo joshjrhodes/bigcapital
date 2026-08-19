@@ -109,6 +109,13 @@ Collection is **off** and stays off until your vendor's licence is approved. All
 are loaded; 12 around Greene are in the job-site picker. Every rate is marked unverified until you
 check it against tax.ohio.gov — the app refuses to switch collection on before you have.
 
+## Attachments
+
+Logos, bills of sale and receipts go into the MinIO container that runs alongside everything else —
+no third party holds RPW's documents. There is a console at http://127.0.0.1:9101 (credentials are
+`S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY` in `.env`) if you ever want to look at the raw files.
+Nightly backups include them automatically.
+
 ## Email
 
 Add your Zoho app-specific password to `MAIL_PASSWORD` in `.env`, then:
