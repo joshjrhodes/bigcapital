@@ -22,6 +22,9 @@ export interface RpwPaperTemplateProps extends InvoicePaperTemplateProps {
   /** Ohio job-site county, shown once sales tax collection is switched on. */
   jobSiteCounty?: string;
   showJobSiteCounty?: boolean;
+  /** Footer descriptor line. Editable so the wording is not baked into code. */
+  footerTagline?: string;
+  showFooterTagline?: boolean;
 }
 
 const INK = '#141414';
@@ -191,6 +194,9 @@ export function RpwPaperTemplate({
   statementLabel = 'Notes',
   statement = '',
 
+  footerTagline = 'Lighting · Audio · Video — Production, Sales & Installation',
+  showFooterTagline = true,
+
   lines = [],
 }: RpwPaperTemplateProps) {
   const isEstimate = documentKind === 'estimate';
@@ -221,32 +227,50 @@ export function RpwPaperTemplate({
         }}
       >
         <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
-          {showCompanyLogo &&
-            (companyLogoUri ? (
+          {showCompanyLogo && !companyLogoUri && (
+            <MakersPlate accent={primaryColor} />
+          )}
+          <div>
+            {showCompanyLogo && companyLogoUri ? (
+              // The supplied lockup already reads "RHODES PRODUCTION WORKS", so
+              // it stands in for the typeset company name rather than sitting
+              // next to it. max-width/max-height with contain means a wide
+              // lockup, a square plate or a tall mark all sit correctly without
+              // the layout caring which arrived.
               <img
                 src={companyLogoUri}
                 alt={companyName}
-                style={{ width: 74, height: 'auto' }}
+                style={{
+                  maxWidth: 200,
+                  maxHeight: 78,
+                  width: 'auto',
+                  height: 'auto',
+                  objectFit: 'contain',
+                  display: 'block',
+                }}
               />
             ) : (
-              <MakersPlate accent={primaryColor} />
-            ))}
-          <div>
-            <div
-              style={{
-                fontFamily: displayFont,
-                fontSize: 15,
-                fontWeight: 600,
-                letterSpacing: '0.05em',
-                textTransform: 'uppercase',
-                lineHeight: 1.2,
-              }}
-            >
-              {companyName}
-            </div>
+              <div
+                style={{
+                  fontFamily: displayFont,
+                  fontSize: 15,
+                  fontWeight: 600,
+                  letterSpacing: '0.05em',
+                  textTransform: 'uppercase',
+                  lineHeight: 1.2,
+                }}
+              >
+                {companyName}
+              </div>
+            )}
             {showCompanyAddress && companyAddress && (
               <div
-                style={{ fontSize: 9.5, color: MUTED, marginTop: 4, maxWidth: 220 }}
+                style={{
+                  fontSize: 9.5,
+                  color: MUTED,
+                  marginTop: 6,
+                  maxWidth: 220,
+                }}
                 dangerouslySetInnerHTML={{ __html: companyAddress }}
               />
             )}
@@ -546,18 +570,20 @@ export function RpwPaperTemplate({
         </div>
       )}
 
-      <div
-        style={{
-          marginTop: 26,
-          paddingTop: 8,
-          borderTop: `2px solid ${secondaryColor}`,
-          ...(label as any),
-          fontSize: 8,
-          letterSpacing: '0.18em',
-        }}
-      >
-        Lighting · Audio · Video — Production, Sales &amp; Installation
-      </div>
+      {showFooterTagline && footerTagline && (
+        <div
+          style={{
+            marginTop: 26,
+            paddingTop: 8,
+            borderTop: `2px solid ${secondaryColor}`,
+            ...(label as any),
+            fontSize: 8,
+            letterSpacing: '0.18em',
+          }}
+        >
+          {footerTagline}
+        </div>
+      )}
     </div>
   );
 }

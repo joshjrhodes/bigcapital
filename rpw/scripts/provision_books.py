@@ -194,7 +194,53 @@ PDF_TEMPLATES = [
 ]
 
 
-def provision_pdf_templates(api):
+# Josh's logo lives in the repo so a rebuild on another host produces the same
+# branded documents. The header lockup already reads "RHODES PRODUCTION WORKS",
+# so the template drops the typeset company name when a logo is present.
+LOGO_FILE = Path(
+    os.environ.get(
+        "RPW_LOGO_FILE",
+        Path(__file__).resolve().parent.parent / "assets" / "RPW Logo-01.png",
+    )
+)
+
+
+def upload_logo(api):
+    """Uploads the logo to object storage and returns its key, or None."""
+    step("Brand assets")
+    if not LOGO_FILE.exists():
+        skip(f"no logo at {LOGO_FILE} — the templates keep the CSS placeholder mark")
+        return None
+
+    import mimetypes
+    import uuid
+
+    payload = LOGO_FILE.read_bytes()
+    mime = mimetypes.guess_type(LOGO_FILE.name)[0] or "application/octet-stream"
+    boundary = "----rpw" + uuid.uuid4().hex
+    body = bytearray()
+    body += f"--{boundary}\r\n".encode()
+    body += (
+        f'Content-Disposition: form-data; name="file"; filename="{LOGO_FILE.name}"\r\n'
+    ).encode()
+    body += f"Content-Type: {mime}\r\n\r\n".encode()
+    body += payload
+    body += f"\r\n--{boundary}--\r\n".encode()
+
+    status, resp = api.request(
+        "POST",
+        "/attachments",
+        headers={"Content-Type": f"multipart/form-data; boundary={boundary}"},
+        body_bytes=bytes(body),
+    )
+    if status not in (200, 201):
+        fail("could not upload the logo", resp)
+    key = api.pick(resp, "key")
+    ok(f"logo uploaded ({LOGO_FILE.name}, {len(payload):,} bytes)")
+    return key
+
+
+def provision_pdf_templates(api, logo_key=None):
     step("Branded PDF templates")
     status, body = api.get("/pdf-templates")
     existing_body = body if isinstance(body, list) else (
@@ -207,10 +253,30 @@ def provision_pdf_templates(api):
         for t in existing_body
     }
     for template in PDF_TEMPLATES:
+        if logo_key:
+            template = {
+                **template,
+                "attributes": {**template["attributes"], "companyLogoKey": logo_key},
+            }
         found = existing.get(template["templateName"])
         if found:
-            skip(f"{template['templateName']} — already present")
             template_id = found.get("id")
+            # The row exists, but the logo may be new or may have changed.
+            if logo_key:
+                status, resp = api.request(
+                    "PUT",
+                    f"/pdf-templates/{template_id}",
+                    {
+                        "templateName": template["templateName"],
+                        "attributes": template["attributes"],
+                    },
+                )
+                if status in (200, 201):
+                    ok(f"{template['templateName']} — logo attached")
+                else:
+                    skip(f"{template['templateName']} — could not update ({status})")
+            else:
+                skip(f"{template['templateName']} — already present")
         else:
             status, resp = api.post("/pdf-templates", template)
             if status not in (200, 201):
@@ -372,7 +438,15 @@ def main():
         created += 1
     print(f"\n  {created} item(s) added, {len(ITEMS) - created} already in place")
 
-    provision_pdf_templates(api)
+    logo_key = upload_logo(api)
+    provision_pdf_templates(api, logo_key)
+
+    if logo_key:
+        status, resp = api.request("PUT", "/organization", {"logoKey": logo_key})
+        if status in (200, 201):
+            ok("logo set on the organization")
+        else:
+            skip(f"could not set the organization logo ({status})")
 
     print(f"\n\033[1;32mBooks provisioned.\033[0m  Open {api.base} and sign in as {EMAIL}.")
     if CREDENTIALS_FILE.exists():

@@ -120,6 +120,21 @@ def main():
     ok("sample estimate and invoice created")
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
+
+    # The HTML is what Gotenberg turns into the PDF. Saving it too makes design
+    # review quick (open it in a browser) and makes it obvious whether the logo
+    # actually resolved.
+    status, html = api.request(
+        "GET", f"/sale-invoices/{invoice_id}/html", raw=True
+    )
+    if status == 200 and isinstance(html, bytes):
+        (OUT_DIR / "rpw-sample-invoice.html").write_bytes(html)
+        markup = html.decode(errors="replace")
+        if "<img" in markup:
+            ok("invoice HTML carries the logo image")
+        else:
+            ok("invoice HTML rendered (no logo image — placeholder mark in use)")
+
     for label, path, out_name in (
         ("estimate", f"/sale-estimates/{estimate_id}", "rpw-sample-estimate.pdf"),
         ("invoice", f"/sale-invoices/{invoice_id}", "rpw-sample-invoice.pdf"),

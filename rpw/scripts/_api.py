@@ -26,9 +26,24 @@ class Api:
         self.org_id = None
 
     # ── plumbing ────────────────────────────────────────────────────────────
-    def request(self, method, path, body=None, headers=None, raw=False, timeout=120):
+    def request(
+        self,
+        method,
+        path,
+        body=None,
+        headers=None,
+        raw=False,
+        timeout=120,
+        body_bytes=None,
+    ):
         url = path if path.startswith("http") else f"{self.api}{path}"
-        data = json.dumps(body).encode() if body is not None else None
+        # body_bytes carries an already-encoded payload (multipart uploads);
+        # body is the usual JSON case.
+        data = (
+            body_bytes
+            if body_bytes is not None
+            else (json.dumps(body).encode() if body is not None else None)
+        )
         hdrs = {"Content-Type": "application/json"}
         if self.token:
             hdrs["Authorization"] = f"Bearer {self.token}"
