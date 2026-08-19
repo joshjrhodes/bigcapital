@@ -14,3 +14,7 @@ export * from './renders/render-receipt-paper-template';
 export * from './renders/render-payment-received-paper-template';
 export * from './renders/render-financial-sheet-template';
 export * from './renders/render-export-resource-table-template';
+
+// ── RPW ──
+export * from './components/RpwPaperTemplate';
+export * from './renders/render-rpw-paper-template';

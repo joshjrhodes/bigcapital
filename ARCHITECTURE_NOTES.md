@@ -219,7 +219,43 @@ host-portability rules.
 
 ---
 
-## 9. Things that will bite
+## 9. What RPW has added so far
+
+Everything below is ours. It follows the conventions above, and the only upstream files it touches
+are listed here — each edit is a single contiguous block, so rebases stay boring.
+
+| Ours | What it is |
+| --- | --- |
+| `modules/RpwSalesTax/` | Ohio multi-county sales tax: county rate table, job-site county per document, county summary report, collection on/off |
+| `modules/RpwBranding/RpwPdfTemplate.utils.ts` | One predicate — "is this an RPW-branded PDF template?" — so the branch in the PDF services is a single line each |
+| `database/tenant/migrations/20260819000000_create_rpw_county_sales_tax_tables.ts` | `rpw_county_tax_rates` + `rpw_transaction_counties`, seeded with all 88 counties (plus 4 COTA variants) from ODT's own table |
+| `shared/pdf-templates/src/components/RpwPaperTemplate.tsx` | The branded estimate/invoice layout, sharing upstream's props so the same attributes drive it |
+| `rpw/scripts/` | Ops tooling: backups, restore drills, provisioning, smoke test, disposable verification stack |
+| `rpw/data/ohio-county-tax-rates.json` | Source of record for the seeded rates, with provenance |
+
+Upstream files carrying an RPW edit:
+
+- `modules/App/App.module.ts` — imports `RpwSalesTaxModule`.
+- `modules/SaleInvoices/queries/SaleInvoicePdf.service.ts` and
+  `modules/SaleEstimates/queries/GetSaleEstimatePdf.ts` — one `if` that picks our renderer when the
+  document's template is ours, plus passing `templateName` through so it can tell.
+- `shared/pdf-templates/src/index.ts`, `constants.ts`, `renders/render-ssr.tsx` — exports and the
+  placeholder font link.
+- `packages/webapp/src/routes/dashboard.tsx` and `src/constants/sidebarMenu.tsx` — one route, one
+  sidebar link.
+
+Two design decisions worth remembering:
+
+1. **The job-site county is a join table, not a column on `SALES_INVOICES`.** Upstream owns that
+   table; if we added a column, every upstream migration touching it becomes a merge risk.
+2. **Rates are data with provenance, not constants.** Each row carries its ODT source URL, the
+   effective period, and a `verified_at` that only a human sets. The API refuses to enable
+   collection while any active county is unverified, and editing a rate clears its verification.
+   ODT republishes quarterly, so a rate is a claim with an expiry date, not a fact.
+
+---
+
+## 10. Things that will bite
 
 - **`.env` is read twice**: docker compose substitutes it into the compose files, *and* Nest's
   `ConfigModule` reads env vars inside the container. A variable only reaches the app if the compose

@@ -47,9 +47,24 @@ Phase 0.5 is done apart from one step only Josh can do: nightly backups run from
 Drive leg needs Josh to run `bash rpw/scripts/setup-gdrive.sh` once and click Allow — until then
 backups are local only.
 
-Next up is Phase 1 (real chart of accounts, branded invoice template, Zoho SMTP, Ohio county sales
-tax scaffolding) — see `PROJECT_BRIEF.md`. Phase 1 starts by wiping the Phase 0 test organization
-(`docker compose down -v`) so the real books begin clean.
+Phase 1 is nearly done. The real organization exists with RPW's chart of accounts and starter
+items, the branded estimate/invoice layout renders through the existing Gotenberg pipeline, and the
+Ohio multi-county sales tax scaffolding is in with collection switched off. Outstanding:
+
+- **Zoho SMTP** — everything is wired; `MAIL_PASSWORD` in `.env` needs Josh's app-specific
+  password, then `python3 rpw/scripts/test_email.py --send`.
+- **Brand assets** — the PDF uses a CSS maker's-plate mark and Oswald/Nunito Sans standing in for
+  DDC Hardware 45/Avenir. Josh reviews `~/rpw-sample-invoice.pdf` and supplies the real files.
+
+## Verifying changes
+
+Never run the smoke test against the real books — it writes dummy invoices, and it refuses to.
+Use the disposable stack instead:
+
+```bash
+bash rpw/scripts/verify_stack.sh      # scratch copy on :8081, full end-to-end, then destroyed
+bash rpw/scripts/make_sample_pdfs.sh  # sample estimate + invoice PDFs into ~/
+```
 
 ## Verified stack (do not trust second-hand descriptions — this was checked against the repo)
 

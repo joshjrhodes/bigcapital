@@ -40,17 +40,12 @@ loses nothing.
 
 ## Log in
 
-The Phase 0 test organization already exists:
-
 - **URL:** http://localhost:8080
-- **Email:** `smoke-test@rhodesproductionworks.com`
-- **Password:** `SmokeTest!2026`
+- **Email:** `josh@rhodesproductionworks.com`
+- **Password:** in `~/rpw-first-login.txt` — change it after signing in, then delete that file.
 
-It's a throwaway org with dummy invoices in it. Phase 1 starts a clean organization for the real
-books — see "Start over with empty books" below.
-
-To register a different account instead, go to http://localhost:8080/auth/register. Each new
-account builds its own organization and its own database.
+These are the real books: RPW's chart of accounts, starter items, and the branded invoice
+template. Sign-up is closed, so nobody else can register an account.
 
 ---
 
@@ -63,15 +58,17 @@ docker compose logs database_migration  # did migrations run?
 docker compose restart server        # kick the API
 ```
 
-Full end-to-end check — creates a customer, item, estimate, invoice, payment, bill and expense,
-renders the invoice PDF, and pulls every financial report:
+Full end-to-end check. It spins up a **throwaway copy** of the whole stack on port 8081, creates a
+customer, item, estimate, invoice, payment, bill and expense, renders the branded PDF, pulls every
+financial report, exercises the county sales tax module, then destroys it:
 
 ```bash
-python3 rpw/scripts/smoke_test.py
+bash rpw/scripts/verify_stack.sh
 ```
 
-If that prints **All smoke-test steps passed**, the whole stack is healthy. It writes dummy records
-into the test organization, so don't run it against the real books.
+If that prints **All smoke-test steps passed**, everything works — and your real books were never
+touched. (The smoke test writes dummy invoices, so it refuses to run against the real
+organization.)
 
 ---
 
@@ -88,17 +85,40 @@ Rebuild only what you changed (`docker compose build server`) to save time.
 
 ---
 
-## Start over with empty books
+## Rebuild the books from scratch
 
-Destroys **all** data — the databases and everything in them:
+Destroys **all** data — the databases and everything in them — then rebuilds the chart of accounts,
+items and branded templates:
 
 ```bash
 docker compose down -v
 docker compose up -d
+sed -i 's/^SIGNUP_DISABLED=true/SIGNUP_DISABLED=false/' .env && docker compose up -d server
+python3 rpw/scripts/provision_books.py
+sed -i 's/^SIGNUP_DISABLED=false/SIGNUP_DISABLED=true/' .env && docker compose up -d server
 ```
 
-Then register your account again at http://localhost:8080/auth/register. This is what Phase 1 will
-do before building the real RPW chart of accounts.
+The provisioning script is idempotent, so re-running it on an existing organization only adds what
+is missing.
+
+## Ohio sales tax
+
+The county rate table lives at **http://localhost:8080/rpw/sales-tax** (sidebar → Ohio Sales Tax).
+
+Collection is **off** and stays off until your vendor's licence is approved. All 88 Ohio counties
+are loaded; 12 around Greene are in the job-site picker. Every rate is marked unverified until you
+check it against tax.ohio.gov — the app refuses to switch collection on before you have.
+
+## Email
+
+Add your Zoho app-specific password to `MAIL_PASSWORD` in `.env`, then:
+
+```bash
+python3 rpw/scripts/test_email.py --send
+```
+
+That authenticates against Zoho and sends you a test message, so you know deliverability works
+before an invoice depends on it.
 
 ---
 

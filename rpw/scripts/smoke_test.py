@@ -312,6 +312,31 @@ def main():
         }
     ]
 
+    step("RPW branded PDF template")
+    status, template = request(
+        "POST",
+        "/pdf-templates",
+        {
+            "templateName": "RPW Standard — Invoice",
+            "resource": "SaleInvoice",
+            "attributes": {
+                "primaryColor": "#141414",
+                "secondaryColor": "#8a7a5c",
+                "companyName": "Rhodes Production Works LTD",
+            },
+        },
+    )
+    if status not in (200, 201):
+        fail("could not create the RPW branded template", template)
+    template_id = pick(template, "id")
+    status, resp = request("PUT", f"/pdf-templates/{template_id}/assign-default", {})
+    if status not in (200, 201):
+        fail("could not set the RPW template as default", resp)
+    # This has to happen BEFORE the invoice is created: an invoice stamps the
+    # then-current default template onto itself, so a template assigned later
+    # would not apply to it.
+    ok("RPW branded template created and set as the default")
+
     step("Estimate")
     status, estimate = request(
         "POST",
@@ -358,6 +383,19 @@ def main():
     if status != 200 or not isinstance(pdf, bytes) or not pdf.startswith(b"%PDF"):
         fail("invoice PDF did not render", pdf if not isinstance(pdf, bytes) else pdf[:200])
     ok(f"invoice PDF rendered ({len(pdf)} bytes)")
+
+    step("RPW branded layout")
+    status, html = request("GET", f"/sale-invoices/{invoice_id}/html", raw=True)
+    if status != 200:
+        fail("could not render the invoice HTML", html)
+    markup = html.decode(errors="replace") if isinstance(html, bytes) else str(html)
+    for needle in ("Lighting", "RPW"):
+        if needle not in markup:
+            fail(
+                f"the branded template did not render (missing '{needle}')",
+                markup[:400],
+            )
+    ok("branded layout renders (maker's-plate mark and footer present)")
 
     step("Payment received")
     status, payment = request(

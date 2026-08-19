@@ -1,5 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { renderInvoicePaperTemplateHtml } from '@bigcapital/pdf-templates';
+import {
+  renderInvoicePaperTemplateHtml,
+  renderRpwInvoicePaperTemplateHtml,
+} from '@bigcapital/pdf-templates';
+import { isRpwPdfTemplateName } from '@/modules/RpwBranding/RpwPdfTemplate.utils';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { GetSaleInvoice } from './GetSaleInvoice.service';
 import { transformInvoiceToPdfTemplate } from '../utils';
@@ -35,6 +39,12 @@ export class SaleInvoicePdf {
     const brandingAttributes =
       await this.getInvoiceBrandingAttributes(invoiceId);
 
+    // ── RPW ── render the Rhodes Production Works layout when the document's
+    // branding template is one of ours; anything else falls through to
+    // upstream's stock template untouched.
+    if (isRpwPdfTemplateName((brandingAttributes as any).templateName)) {
+      return renderRpwInvoicePaperTemplateHtml({ ...brandingAttributes });
+    }
     return renderInvoicePaperTemplateHtml({
       ...brandingAttributes,
     });
@@ -97,10 +107,19 @@ export class SaleInvoicePdf {
         templateId,
       );
 
+    // ── RPW ── read the template's name from the model rather than from the
+    // branding service: its transformer only emits an allow-list of attributes
+    // and drops `templateName`, which would silently fall back to the stock
+    // layout.
+    const templateRow = templateId
+      ? await this.pdfTemplateModel().query().findById(templateId)
+      : null;
+
     // Merge the branding template attributes with the invoice.
     return {
       ...brandingTemplate.attributes,
       ...transformInvoiceToPdfTemplate(invoice),
-    };
+      templateName: templateRow?.templateName,
+    } as InvoicePdfTemplateAttributes;
   }
 }

@@ -149,6 +149,84 @@ ITEMS = [
 ]
 
 
+# ── Branded PDF templates ───────────────────────────────────────────────────
+# One row per document type in the tenant's `pdf_templates` table, named with
+# the "RPW" prefix that the server's PDF services look for. Switching back to
+# upstream's stock design is a dropdown change, not a deployment.
+PDF_TEMPLATES = [
+    {
+        "templateName": "RPW Standard — Invoice",
+        "resource": "SaleInvoice",
+        "attributes": {
+            "primaryColor": "#141414",
+            "secondaryColor": "#8a7a5c",
+            "showCompanyLogo": True,
+            "companyName": "Rhodes Production Works LTD",
+            "billedToLabel": "Billed to",
+            "totalLabel": "Total",
+            "dueAmountLabel": "Amount due",
+            "termsConditionsLabel": "Terms",
+            "termsConditions": (
+                "Net 14 unless agreed otherwise. Equipment remains the property "
+                "of Rhodes Production Works LTD until paid in full."
+            ),
+            "statementLabel": "Notes",
+        },
+    },
+    {
+        "templateName": "RPW Standard — Estimate",
+        "resource": "SaleEstimate",
+        "attributes": {
+            "primaryColor": "#141414",
+            "secondaryColor": "#8a7a5c",
+            "showCompanyLogo": True,
+            "companyName": "Rhodes Production Works LTD",
+            "billedToLabel": "Prepared for",
+            "totalLabel": "Estimate total",
+            "termsConditionsLabel": "Terms",
+            "termsConditions": (
+                "Estimate valid for 30 days. A signed acceptance and deposit "
+                "hold the date."
+            ),
+            "statementLabel": "Scope notes",
+        },
+    },
+]
+
+
+def provision_pdf_templates(api):
+    step("Branded PDF templates")
+    status, body = api.get("/pdf-templates")
+    existing_body = body if isinstance(body, list) else (
+        api.pick(body, "pdfTemplates") or (body or {}).get("data") or []
+    )
+    if isinstance(existing_body, dict):
+        existing_body = existing_body.get("results") or []
+    existing = {
+        (t.get("template_name") or t.get("templateName") or "").strip(): t
+        for t in existing_body
+    }
+    for template in PDF_TEMPLATES:
+        found = existing.get(template["templateName"])
+        if found:
+            skip(f"{template['templateName']} — already present")
+            template_id = found.get("id")
+        else:
+            status, resp = api.post("/pdf-templates", template)
+            if status not in (200, 201):
+                fail(f"could not create {template['templateName']}", resp)
+            template_id = api.pick(resp, "id")
+            ok(template["templateName"])
+        if template_id:
+            status, resp = api.request(
+                "PUT", f"/pdf-templates/{template_id}/assign-default", {}
+            )
+            if status in (200, 201):
+                ok(f"{template['templateName']} set as the default")
+            else:
+                skip(f"could not set default for {template['templateName']} ({status})")
+
+
 def main():
     api = Api()
     print(f"\033[1mProvisioning RPW books\033[0m  →  {api.base}")
@@ -293,6 +371,8 @@ def main():
         ok(item["name"])
         created += 1
     print(f"\n  {created} item(s) added, {len(ITEMS) - created} already in place")
+
+    provision_pdf_templates(api)
 
     print(f"\n\033[1;32mBooks provisioned.\033[0m  Open {api.base} and sign in as {EMAIL}.")
     if CREDENTIALS_FILE.exists():

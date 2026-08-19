@@ -9,7 +9,11 @@ import { PdfTemplateModel } from '@/modules/PdfTemplate/models/PdfTemplate';
 import { events } from '@/common/events/events';
 import { SaleEstimate } from '../models/SaleEstimate';
 import { TenantModelProxy } from '@/modules/System/models/TenantBaseModel';
-import { renderEstimatePaperTemplateHtml } from '@bigcapital/pdf-templates';
+import {
+  renderEstimatePaperTemplateHtml,
+  renderRpwEstimatePaperTemplateHtml,
+} from '@bigcapital/pdf-templates';
+import { isRpwPdfTemplateName } from '@/modules/RpwBranding/RpwPdfTemplate.utils';
 
 @Injectable()
 export class GetSaleEstimatePdf {
@@ -36,6 +40,12 @@ export class GetSaleEstimatePdf {
     const brandingAttributes =
       await this.getEstimateBrandingAttributes(estimateId);
 
+    // ── RPW ── render the Rhodes Production Works layout when the document's
+    // branding template is one of ours; anything else falls through to
+    // upstream's stock template untouched.
+    if (isRpwPdfTemplateName((brandingAttributes as any).templateName)) {
+      return renderRpwEstimatePaperTemplateHtml({ ...brandingAttributes });
+    }
     return renderEstimatePaperTemplateHtml({ ...brandingAttributes });
   }
 
@@ -95,9 +105,18 @@ export class GetSaleEstimatePdf {
       )?.id;
     const brandingTemplate =
       await this.estimatePdfTemplate.getEstimatePdfTemplate(templateId);
+    // ── RPW ── read the template's name from the model rather than from the
+    // branding service: its transformer only emits an allow-list of attributes
+    // and drops `templateName`, which would silently fall back to the stock
+    // layout.
+    const templateRow = templateId
+      ? await this.pdfTemplateModel().query().findById(templateId)
+      : null;
+
     return {
       ...brandingTemplate.attributes,
       ...transformEstimateToPdfTemplate(saleEstimate),
-    };
+      templateName: templateRow?.templateName,
+    } as EstimatePdfBrandingAttributes;
   }
 }

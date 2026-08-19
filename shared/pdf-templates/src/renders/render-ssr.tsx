@@ -1,7 +1,7 @@
 import { renderToString } from 'react-dom/server';
 import createCache from '@emotion/cache';
 import { extractCritical } from '@emotion/server';
-import { OpenSansFontLink } from '../constants';
+import { OpenSansFontLink, RpwFontLink } from '../constants';
 import { PaperTemplateLayout } from '../components/PaperTemplateLayout';
 
 export const renderSSR = (children: React.ReactNode) => {
@@ -21,6 +21,7 @@ export const renderSSR = (children: React.ReactNode) => {
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Invoice</title>
     ${OpenSansFontLink}
+    ${RpwFontLink}
     <style data-emotion="${key} ${extractedHtml.ids.join(' ')}">${extractedHtml.css
     }</style>
 </head>
