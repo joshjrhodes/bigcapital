@@ -277,3 +277,9 @@ Two design decisions worth remembering:
 - **Node 18 only** (`.nvmrc` 18.16.1; pnpm 9). The Dockerfiles pin it; don't build with newer Node.
 - **Husky/`prepare`** runs during the production dependency install in `packages/server/Dockerfile`
   — that is why husky is added and then removed there. Leave it alone.
+- **Docker layer order in `packages/server/Dockerfile` is load-bearing.** Both stages copy only the
+  `shared/*/package.json` manifests before `pnpm install`, and the sources afterwards. Upstream
+  copied the whole `shared` tree first, so editing one line of a PDF template invalidated the
+  install layer and cost a full ten-minute reinstall; with the manifests split out the same edit
+  rebuilds in about ninety seconds. If a rebase drops this, rebuilds get slow again — that is the
+  symptom to recognise.

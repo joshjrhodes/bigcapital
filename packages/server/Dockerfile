@@ -15,10 +15,21 @@ ENV PYTHON=/usr/bin/python3
 # Copy package files for dependency installation
 COPY --chown=node:node package.json pnpm-lock.yaml pnpm-workspace.yaml lerna.json ./
 COPY --chown=node:node packages/server/package.json ./packages/server/
-COPY --chown=node:node shared ./shared
+
+# RPW: only the workspace manifests, not the sources. pnpm needs these to link
+# the workspace, and keeping the sources out means editing a shared package does
+# not invalidate the install layer — which turned a one-line template change into
+# a ten-minute reinstall.
+COPY --chown=node:node shared/bigcapital-utils/package.json ./shared/bigcapital-utils/
+COPY --chown=node:node shared/pdf-templates/package.json ./shared/pdf-templates/
+COPY --chown=node:node shared/email-components/package.json ./shared/email-components/
+COPY --chown=node:node shared/sdk-ts/package.json ./shared/sdk-ts/
 
 # Install all dependencies (including devDependencies for build)
 RUN pnpm install --frozen-lockfile
+
+# Now the shared sources, after the expensive install layer.
+COPY --chown=node:node shared ./shared
 
 # Copy source code
 COPY --chown=node:node ./packages/server ./packages/server
@@ -47,7 +58,13 @@ ENV PYTHON=/usr/bin/python3
 # Copy package files for production dependency installation
 COPY --chown=nodejs:nodejs package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY --chown=nodejs:nodejs packages/server/package.json ./packages/server/
-COPY --chown=nodejs:nodejs shared ./shared
+
+# RPW: manifests only — see the builder stage. The built shared packages are
+# copied in from the builder further down, so the sources are not needed here.
+COPY --chown=nodejs:nodejs shared/bigcapital-utils/package.json ./shared/bigcapital-utils/
+COPY --chown=nodejs:nodejs shared/pdf-templates/package.json ./shared/pdf-templates/
+COPY --chown=nodejs:nodejs shared/email-components/package.json ./shared/email-components/
+COPY --chown=nodejs:nodejs shared/sdk-ts/package.json ./shared/sdk-ts/
 
 # Copy .husky directory (needed for husky install command)
 COPY --chown=nodejs:nodejs .husky ./.husky
