@@ -4,6 +4,7 @@ import useApiRequest from '../../useRequest';
 import {
   RPW_SALES_TAX_COUNTIES,
   RPW_SALES_TAX_COUNTY_SUMMARY,
+  RPW_SALES_TAX_DOCUMENTS,
   RPW_SALES_TAX_SETTINGS,
 } from './query-keys';
 
@@ -79,6 +80,33 @@ export function useRpwCountySummary(
   );
 }
 
+export interface RpwDocument {
+  transactionType: string;
+  transactionId: number;
+  documentNumber: string | null;
+  documentDate: string | null;
+  customerName: string | null;
+  amount: number;
+  countyId: number | null;
+  countyName: string | null;
+}
+
+export function useRpwDocuments(
+  fromDate: string,
+  toDate: string,
+  props?: Record<string, any>,
+) {
+  return useRequestQuery<RpwDocument[]>(
+    [RPW_SALES_TAX_DOCUMENTS, fromDate, toDate],
+    {
+      method: 'get',
+      url: 'rpw/sales-tax/documents',
+      params: { fromDate, toDate },
+    },
+    { select: (res: { data: RpwDocument[] }) => res.data, defaultData: [], ...props },
+  );
+}
+
 export function useUpdateRpwCounty(props?: Record<string, any>) {
   const queryClient = useQueryClient();
   const apiRequest = useApiRequest();
@@ -121,6 +149,7 @@ export function useSetRpwTransactionCounty(props?: Record<string, any>) {
     }) => apiRequest.post('rpw/sales-tax/transaction-county', values),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [RPW_SALES_TAX_COUNTY_SUMMARY] });
+      queryClient.invalidateQueries({ queryKey: [RPW_SALES_TAX_DOCUMENTS] });
     },
   });
 }

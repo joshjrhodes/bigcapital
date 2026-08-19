@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { GetCountyTaxRatesService } from './queries/GetCountyTaxRates.service';
 import { GetCountySalesTaxSummaryService } from './queries/GetCountySalesTaxSummary.service';
+import { GetDocumentsWithCountyService } from './queries/GetDocumentsWithCounty.service';
 import { UpdateCountyTaxRateService } from './commands/UpdateCountyTaxRate.service';
 import { SetTransactionCountyService } from './commands/SetTransactionCounty.service';
 import { RpwSalesTaxSettingsService } from './RpwSalesTaxSettings.service';
@@ -15,6 +16,7 @@ export class RpwSalesTaxApplication {
   constructor(
     private readonly getCountyTaxRatesService: GetCountyTaxRatesService,
     private readonly getCountySummaryService: GetCountySalesTaxSummaryService,
+    private readonly getDocumentsService: GetDocumentsWithCountyService,
     private readonly updateCountyTaxRateService: UpdateCountyTaxRateService,
     private readonly setTransactionCountyService: SetTransactionCountyService,
     private readonly settingsService: RpwSalesTaxSettingsService,
@@ -87,6 +89,10 @@ export class RpwSalesTaxApplication {
       await this.settingsService.setDefaultCountyId(dto.defaultCountyId);
     }
     return this.getSettings();
+  }
+
+  public getDocuments(fromDate: string, toDate: string) {
+    return this.getDocumentsService.getDocuments(fromDate, toDate);
   }
 
   public async getCountySummary(fromDate: string, toDate: string) {

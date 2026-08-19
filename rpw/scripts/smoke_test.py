@@ -650,6 +650,37 @@ def main():
         fail("could not read the job-site county back", resp)
     ok("job-site county reads back")
 
+    status, documents = request(
+        "GET", f"/rpw/sales-tax/documents?fromDate={year_start}&toDate={year_end}"
+    )
+    if status != 200 or not isinstance(documents, list) or not documents:
+        fail("the documents list did not come back", documents)
+    invoice_row = next(
+        (
+            d
+            for d in documents
+            if (d.get("transaction_type") or d.get("transactionType")) == "SaleInvoice"
+            and (d.get("transaction_id") or d.get("transactionId")) == invoice_id
+        ),
+        None,
+    )
+    if not invoice_row:
+        fail("the invoice is missing from the documents list", documents[:3])
+    if (invoice_row.get("county_name") or invoice_row.get("countyName")) != "Greene":
+        fail("the invoice's job-site county did not come back", invoice_row)
+    estimate_rows = [
+        d
+        for d in documents
+        if (d.get("transaction_type") or d.get("transactionType")) == "SaleEstimate"
+    ]
+    if not estimate_rows:
+        fail("estimates are missing from the documents list", documents[:3])
+    ok(
+        f"documents list shows {len(documents)} document(s); the invoice carries Greene "
+        f"and {sum(1 for d in documents if not (d.get('county_id') or d.get('countyId')))} "
+        "still need a county"
+    )
+
     status, summary = request(
         "GET", f"/rpw/sales-tax/reports/county-summary?fromDate={year_start}&toDate={year_end}"
     )

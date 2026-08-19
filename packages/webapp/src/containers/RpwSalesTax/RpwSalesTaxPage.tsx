@@ -14,7 +14,9 @@ import {
 import {
   useRpwCounties,
   useRpwCountySummary,
+  useRpwDocuments,
   useRpwSalesTaxSettings,
+  useSetRpwTransactionCounty,
   useUpdateRpwCounty,
   useUpdateRpwSalesTaxSettings,
 } from '@/hooks/query/rpw-sales-tax';
@@ -93,9 +95,11 @@ export function RpwSalesTaxPage() {
   const { data: counties = [], isLoading } = useRpwCounties(false);
   const { data: settings = {} } = useRpwSalesTaxSettings();
   const { data: summary } = useRpwCountySummary(`${year}-01-01`, `${year}-12-31`);
+  const { data: documents = [] } = useRpwDocuments(`${year}-01-01`, `${year}-12-31`);
 
   const { mutateAsync: updateCounty } = useUpdateRpwCounty();
   const { mutateAsync: updateSettings } = useUpdateRpwSalesTaxSettings();
+  const { mutateAsync: setDocumentCounty } = useSetRpwTransactionCounty();
 
   const [error, setError] = React.useState(null);
 
@@ -123,6 +127,19 @@ export function RpwSalesTaxPage() {
       setError(
         err?.response?.data?.message ||
           'Could not update the sales tax settings.',
+      ),
+    );
+  };
+
+  const handleDocumentCounty = (document, countyId) => {
+    setError(null);
+    setDocumentCounty({
+      transactionType: document.transactionType ?? document.transaction_type,
+      transactionId: document.transactionId ?? document.transaction_id,
+      countyId,
+    }).catch((err) =>
+      setError(
+        err?.response?.data?.message || 'Could not set the job-site county.',
       ),
     );
   };
@@ -241,6 +258,73 @@ export function RpwSalesTaxPage() {
           quarter may not be right now — that is why nothing counts as verified
           until you have looked.
         </p>
+
+        <h3 style={{ marginTop: 32 }}>Job-site county by document — {year}</h3>
+        <p className={Classes.TEXT_MUTED} style={{ marginTop: -6 }}>
+          Ohio taxes a sale at the rate of the county the work happened in, so
+          every estimate and invoice needs one. Anything left as “—” is missing
+          from the county report below.
+        </p>
+        <HTMLTable striped style={{ width: '100%' }}>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Document</th>
+              <th>Client</th>
+              <th style={{ textAlign: 'right' }}>Amount</th>
+              <th style={{ width: 190 }}>Job-site county</th>
+            </tr>
+          </thead>
+          <tbody>
+            {documents.map((document) => {
+              const type =
+                document.transactionType ?? document.transaction_type ?? '';
+              const id = document.transactionId ?? document.transaction_id;
+              const countyId = document.countyId ?? document.county_id;
+              return (
+                <tr key={`${type}-${id}`}>
+                  <td>{document.documentDate ?? document.document_date}</td>
+                  <td>
+                    <Tag minimal style={{ marginRight: 6 }}>
+                      {type === 'SaleEstimate' ? 'Estimate' : 'Invoice'}
+                    </Tag>
+                    {document.documentNumber ?? document.document_number ?? '—'}
+                  </td>
+                  <td>{document.customerName ?? document.customer_name ?? '—'}</td>
+                  <td style={{ textAlign: 'right' }}>
+                    {currency(document.amount)}
+                  </td>
+                  <td>
+                    <HTMLSelect
+                      fill
+                      value={countyId || ''}
+                      onChange={(event) =>
+                        handleDocumentCounty(
+                          document,
+                          Number(event.currentTarget.value),
+                        )
+                      }
+                    >
+                      <option value="">—</option>
+                      {activeCounties.map((county) => (
+                        <option key={county.id} value={county.id}>
+                          {county.county_name ?? county.countyName}
+                        </option>
+                      ))}
+                    </HTMLSelect>
+                  </td>
+                </tr>
+              );
+            })}
+            {documents.length === 0 && (
+              <tr>
+                <td colSpan={5} className={Classes.TEXT_MUTED}>
+                  No estimates or invoices yet this year.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </HTMLTable>
 
         <h3 style={{ marginTop: 32 }}>Sales by county — {year}</h3>
         <HTMLTable striped style={{ width: '100%' }}>

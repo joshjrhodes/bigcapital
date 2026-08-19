@@ -4,6 +4,7 @@ import { RpwSalesTaxApplication } from './RpwSalesTax.application';
 import { RpwSalesTaxSettingsService } from './RpwSalesTaxSettings.service';
 import { GetCountyTaxRatesService } from './queries/GetCountyTaxRates.service';
 import { GetCountySalesTaxSummaryService } from './queries/GetCountySalesTaxSummary.service';
+import { GetDocumentsWithCountyService } from './queries/GetDocumentsWithCounty.service';
 import { UpdateCountyTaxRateService } from './commands/UpdateCountyTaxRate.service';
 import { SetTransactionCountyService } from './commands/SetTransactionCounty.service';
 import { RpwCountyTaxRate } from './models/RpwCountyTaxRate.model';
@@ -31,6 +32,7 @@ const models = [
     RpwSalesTaxSettingsService,
     GetCountyTaxRatesService,
     GetCountySalesTaxSummaryService,
+    GetDocumentsWithCountyService,
     UpdateCountyTaxRateService,
     SetTransactionCountyService,
   ],

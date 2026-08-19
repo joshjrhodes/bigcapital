@@ -94,6 +94,25 @@ export class RpwSalesTaxController {
     return this.application.getTransactionCounty(transactionType, transactionId);
   }
 
+  @Get('documents')
+  @ApiOperation({
+    summary:
+      'Lists estimates and invoices with their job-site county, including the ' +
+      'ones that still have none.',
+  })
+  @ApiQuery({ name: 'fromDate', required: false, example: '2026-01-01' })
+  @ApiQuery({ name: 'toDate', required: false, example: '2026-12-31' })
+  public getDocuments(
+    @Query('fromDate') fromDate: string,
+    @Query('toDate') toDate: string,
+  ) {
+    const today = new Date();
+    return this.application.getDocuments(
+      fromDate || `${today.getFullYear()}-01-01`,
+      toDate || `${today.getFullYear()}-12-31`,
+    );
+  }
+
   @Get('reports/county-summary')
   @ApiOperation({
     summary:
