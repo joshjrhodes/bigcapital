@@ -14,3 +14,11 @@ e2e/.auth/
 
 
 .pnpm-store
+# RPW: laptop-specific compose overrides (see docker-compose.rpw.yml for the shared bits)
+docker-compose.override.yml
+
+# RPW: local backups / scratch
+/backups/
+
+# RPW: local Claude Code settings
+.claude/settings.local.json

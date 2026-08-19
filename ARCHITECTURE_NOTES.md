@@ -1,0 +1,239 @@
+# ARCHITECTURE_NOTES.md — what Bigcapital actually is
+
+Written after reading the repo and running the stack (Phase 0, August 2026). Everything here was
+verified against the code at `origin/develop` or against the running containers — not assumed.
+Re-verify after any large upstream merge.
+
+---
+
+## 1. Services and datastores
+
+Seven containers. Idle memory measured on the laptop is in the last column — the whole stack sits
+around **0.75 GB**, comfortably inside the ~4 GB target host.
+
+| Service | Image / source | Role | Idle RAM |
+| --- | --- | --- | --- |
+| `proxy` | `envoyproxy/envoy:v1.30` + `docker/envoy/envoy.yaml` | Front door. `/api` → server, everything else → webapp | 80 MB |
+| `server` | built from `packages/server/Dockerfile` (`rpw/server:local`) | NestJS 10 API, global prefix `/api`, port 3000 | 277 MB |
+| `webapp` | built from `packages/webapp/Dockerfile` (`rpw/webapp:local`) | React SPA compiled by Vite, served as static files by nginx | 10 MB |
+| `mysql` | built from `docker/mariadb` | **MariaDB** — the only relational store | 131 MB |
+| `redis` | built from `docker/redis` | Cache + BullMQ queues | 4 MB |
+| `gotenberg` | `gotenberg/gotenberg:7` | Headless Chromium; turns HTML into PDF | 232 MB |
+| `database_migration` | our overlay reuses `rpw/server:local` | Runs migrations at startup, then exits | — |
+
+There is **no MongoDB** and **no Postgres**, despite what older docs and the CONTRIBUTING guide
+imply (CONTRIBUTING still shows a `bigcapital-mongo` container in its example output — stale).
+
+### Databases: one system DB + one DB per organization
+
+```
+bigcapital_system                      -- users, tenants registry, subscriptions
+bigcapital_tenant_<organization_id>    -- ALL business data for one organization
+```
+
+The tenant database is created and migrated at organization-build time by
+`packages/server/src/modules/TenantDBManager/`. The suffix is the organization's public id
+(e.g. `bigcapital_tenant_2bw1d1mszhjh90`), not a numeric id.
+
+**Backup consequence (Phase 0.5):** dumping `bigcapital_system` alone is worthless. The backup must
+dump the system DB *and* every `bigcapital_tenant_%` database — discover them with
+`SHOW DATABASES LIKE 'bigcapital_tenant_%'` rather than hardcoding a name.
+
+Migrations live in two trees, both run by the CLI (`node dist/cli.js`):
+
+- `packages/server/src/database/system/migrations/` — 29 migrations, system DB.
+- `packages/server/src/database/tenant/migrations/` — 104 migrations, applied to every tenant DB.
+- Seeds: `packages/server/src/database/tenant/seeds/` — `core/` holds the seeders,
+  `data/accounts.ts` is the default chart of accounts (34 accounts), `data/TaxRates.ts` the
+  starter tax rates.
+
+Custom RPW tables are **tenant** migrations in nearly all cases. Knex migrations, so `up()`/`down()`
+are both required — the brief demands reversibility.
+
+---
+
+## 2. Request path
+
+```
+browser → :8080 (envoy)
+             ├── /api/*  → server:3000        (NestJS, global prefix /api)
+             └── /*      → webapp:80          (nginx, SPA fallback to index.html)
+```
+
+The web app calls the API with **relative URLs** (`packages/webapp/src/services/axios.tsx` creates a
+bare `axios.create()`), so there is no compiled-in hostname. That is why moving hosts is only a DNS
+and reverse-proxy change — nothing in the built bundle knows where it lives.
+
+Auth is a JWT bearer token plus an organization header:
+
+```
+Authorization: Bearer <token>
+organization-id: <organization public id>
+```
+
+API responses are serialised in **snake_case** (`access_token`, `organization_id`) even though DTOs
+are camelCase — worth remembering when writing scripts against the API.
+
+Background jobs run on BullMQ inside the server container (mail sending, organization build,
+inventory recompute). A Bull Board UI is mounted at `/queues`. Jobs run in-container, so they do not
+depend on the laptop being awake in any way the brief cares about — once the stack is on a server,
+they run there.
+
+---
+
+## 3. Where the money lives (do not touch)
+
+- Ledger core: `packages/server/src/modules/Ledger/` — the double-entry engine.
+- Per-document GL entry builders live beside their module, e.g.
+  `modules/SaleInvoices/ledger/`, `modules/Bills/`, `modules/Expenses/`.
+- Financial reports: `modules/FinancialStatements/modules/<ReportName>/`, exposed as
+  `/api/reports/<report-name>` (profit-loss-sheet, balance-sheet, trial-balance-sheet,
+  general-ledger, cashflow-statement, journal, receivable/payable-aging-summary,
+  sales-tax-liability-summary, …).
+
+Per the brief: **never modify these.** Custom behaviour hangs off events and new tables instead.
+
+---
+
+## 4. Sales documents (estimates and invoices)
+
+Each sales document is one module with a consistent shape:
+
+```
+modules/SaleInvoices/
+  SaleInvoices.controller.ts      HTTP routes            (/api/sale-invoices)
+  SaleInvoices.application.ts     thin facade the controller calls
+  commands/                       create / edit / delete / mail
+  queries/                        reads, PDF, mail-state
+  models/                         Objection models (SaleInvoice, ItemEntry …)
+  dtos/                           class-validator request/response DTOs
+  ledger/                         GL entries for this document type
+  subscribers/                    event listeners
+```
+
+`modules/SaleEstimates/` mirrors it (`/api/sale-estimates`), as do `Bills`, `Expenses`,
+`PaymentReceived` (`/api/payments-received`), `Customers`, `Vendors`, `Items`.
+
+Line items are shared: `modules/TransactionItemEntry/` with `ItemEntryDto`
+(`index`, `itemId`, `quantity`, `rate`, `description`, `discount`, tax fields).
+
+Taxes today: a per-tenant `tax_rates` table (`modules/TaxRates/`), and each line item can carry
+`sellTaxRateId` / `purchaseTaxRateId`. There is already a
+`/api/reports/sales-tax-liability-summary` report (requires a `basis=cash|accrual` query param).
+
+**Phase 1 hook for Ohio multi-county tax:** one `tax_rates` row per county gives correct per-invoice
+rate application for free; what upstream lacks is the *county dimension* on the transaction and
+county-separated reporting. That is an additive column on the sales documents plus a new report —
+no ledger changes.
+
+---
+
+## 5. PDF generation (matters for Phases 1 and 3)
+
+The pipeline is HTML-first, which is good news: styling an invoice is CSS, not a PDF DSL.
+
+```
+GET /api/sale-invoices/:id   with  Accept: application/pdf
+  → SaleInvoicePdf.service.ts
+      → branding attributes  (SaleInvoicePdfTemplate.service.ts + pdf_templates row)
+      → renderInvoicePaperTemplateHtml()      shared/pdf-templates (React SSR → HTML string)
+      → ChromiumlyTenancy.convertHtmlContent()  POSTs the HTML to Gotenberg
+  → PDF buffer
+```
+
+- Templates are **React components**: `shared/pdf-templates/src/components/InvoicePaperTemplate.tsx`,
+  `EstimatePaperTemplate.tsx`, `PaperTemplate.tsx` (shared frame), with SSR entry points in
+  `shared/pdf-templates/src/renders/`.
+- Per-organization template records live in the tenant table `pdf_templates`
+  (`modules/PdfTemplate/`, model `PdfTemplateModel`: `resource`, `templateName`, `predefined`,
+  `default`, `attributes` JSON). Standard templates are seeded by
+  `20240915195024_seed_standard_pdf_templates.ts`.
+- `attributes` is free-form JSON — colours, logo, which blocks show. The web app already has a
+  branding editor for it.
+- `GET /api/sale-invoices/:id/html` returns the same HTML without rendering, which makes iterating
+  on a design fast.
+
+**Phase 1** (stock branded template) = restyle/extend the React templates + seed an RPW default
+`pdf_templates` row. **Phase 3** (pdfme designer) = a new template kind stored in the same table,
+with generation branching on template type and falling back to the Phase 1 renderer on error.
+
+Fonts: Gotenberg renders in Chromium inside its own container, so a webfont must be embedded in the
+HTML (base64 `@font-face`) or served from a URL the container can reach — a font installed on the
+laptop is invisible to it.
+
+---
+
+## 6. Email
+
+`modules/Mail/Mail.module.ts` builds a single **nodemailer** transport from `MAIL_HOST`,
+`MAIL_PORT`, `MAIL_SECURE`, `MAIL_USERNAME`, `MAIL_PASSWORD` (auth is only attached when a username
+is set). `MAIL_FROM_NAME` / `MAIL_FROM_ADDRESS` set the envelope.
+
+Sending is queued, not inline: e.g. `modules/SaleInvoices/commands/SendSaleInvoiceMail.ts` →
+`SendSaleInvoiceMailJob.ts` → `processors/SendSaleInvoiceMail.processor.ts` (BullMQ). Mail bodies
+are React components in `shared/email-components/`. Endpoints: `POST /api/sale-invoices/:id/mail`,
+`POST /api/sale-estimates/:id/mail`.
+
+Zoho SMTP in Phase 1 is therefore configuration, not code: `smtp.zoho.com`, port 465 with
+`MAIL_SECURE=true`, an app-specific password, and `MAIL_FROM_ADDRESS=josh@rhodesproductionworks.com`.
+
+---
+
+## 7. Attachments — the one real gap
+
+`modules/Attachments/` uploads exclusively to **S3-compatible object storage**
+(`S3UploadPipeline.ts`, `modules/S3/S3.module.ts`, `S3_*` env vars). There is no local-disk driver
+upstream. So "bill of sale attachments" (Phase 5) and organization logos need either:
+
+- a small **MinIO** container with a named volume (self-hosted, no third party, ~100 MB RAM), or
+- a real S3 bucket (cheap, but off-box and another credential).
+
+This is a Phase 1 decision, not a Phase 0 blocker — flagged for Josh. MinIO is the recommendation:
+it keeps everything inside the compose file and inside one named volume, matching the brief's
+host-portability rules.
+
+---
+
+## 8. Extension points for RPW modules
+
+1. **New server module:** create `packages/server/src/modules/<Feature>/` following the layout in
+   §4, then register it in `modules/App/App.module.ts` (one import + one entry in `imports`). This
+   is the only upstream file a new module has to touch — keep those edits to a single contiguous
+   block so rebases stay trivial.
+2. **New tenant tables:** a Knex migration in `database/tenant/migrations/` with a real `down()`.
+   Models extend `TenantBaseModel` (`modules/System/models/TenantBaseModel.ts`), which is what makes
+   a model resolve to the current organization's database.
+3. **Reacting to accounting events instead of editing it:** `src/common/events/events.ts` is a
+   registry of ~every domain event (`saleInvoice.onCreate`, `onDelivered`, `onPdfViewed`,
+   `paymentReceived.onCreated`, …) emitted through `EventEmitter2`. Phase 4's CRM timeline should be
+   a subscriber on these — zero changes to the accounting modules.
+4. **Feature flags:** `modules/Features/` with `Features` enum in `src/common/types/Features.ts`,
+   stored per tenant through the settings driver (`FeaturesSettingsDriver`). Custom modules should
+   register a flag here so half-finished work can be switched off (brief §3.5).
+5. **Settings:** `modules/Settings/` is a generic per-tenant key/value store — the right home for
+   things like "sales tax collection enabled" and "default job-site county" without a schema change.
+6. **Web UI:** `packages/webapp/src/containers/<Area>/`, routed from `src/routes/dashboard.tsx`
+   (and `preferences.tsx` / `preferencesTabs.tsx` for settings pages). Data fetching goes through
+   `src/hooks/query/` (React Query) — follow the existing hook-per-resource pattern.
+7. **Ops scripts and anything not upstream's business:** `rpw/` at the repo root.
+
+---
+
+## 9. Things that will bite
+
+- **`.env` is read twice**: docker compose substitutes it into the compose files, *and* Nest's
+  `ConfigModule` reads env vars inside the container. A variable only reaches the app if the compose
+  file explicitly passes it into the `server` service's `environment:` block. Upstream's
+  `docker-compose.prod.yml` misses a few (`APP_JWT_SECRET`, throttling, PostHog) — our
+  `docker-compose.rpw.yml` adds them back.
+- **`docker-compose.prod.yml` has a typo** upstream: `- OPEN_EXCHANGE_RATE_APP_ID-${…}` (hyphen
+  instead of `=`). Harmless for us since exchange rates are unused, but do not copy the pattern.
+- **The published `bigcapitalhq/*:latest` images are not this code.** Upstream's release tags stop
+  at `v0.9.12` (2023) while `develop` has ~2100 commits since, so the fork tracks `develop`. Our
+  compose overlay builds from source for exactly this reason — running upstream images against our
+  migrations would drift.
+- **Organization build payload is fussy:** `fiscalYear` must be lowercase (`january`), `language`
+  is `en` or `ar` (not `en-US`), and `dateFormat` uses `MM/DD/yyyy` (lowercase year).
+- **Node 18 only** (`.nvmrc` 18.16.1; pnpm 9). The Dockerfiles pin it; don't build with newer Node.
+- **Husky/`prepare`** runs during the production dependency install in `packages/server/Dockerfile`
+  — that is why husky is added and then removed there. Leave it alone.

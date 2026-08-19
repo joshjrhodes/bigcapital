@@ -1,0 +1,54 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# RPW overlay — layered on top of the upstream `docker-compose.prod.yml`.
+#
+# Purpose: run *this fork's* code instead of the published `bigcapitalhq/*`
+# images, so custom RPW modules (branded PDF templates, sales-tax scaffolding,
+# CRM, …) actually end up in the running containers.
+#
+# This file is host-agnostic on purpose: it must run unchanged on the laptop,
+# on a VPS, and later on Josh's own hardware. Anything host-specific belongs in
+# `.env` or the git-ignored `docker-compose.override.yml`.
+#
+# Usage (COMPOSE_FILE in .env already wires this up):
+#   docker compose up -d
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  server:
+    image: rpw/server:local
+    build:
+      context: ./
+      dockerfile: packages/server/Dockerfile
+    environment:
+      # Not passed through by the upstream prod compose file, but read by the app.
+      - APP_JWT_SECRET=${APP_JWT_SECRET}
+      - THROTTLE_GLOBAL_TTL=${THROTTLE_GLOBAL_TTL}
+      - THROTTLE_GLOBAL_LIMIT=${THROTTLE_GLOBAL_LIMIT}
+      - THROTTLE_AUTH_TTL=${THROTTLE_AUTH_TTL}
+      - THROTTLE_AUTH_LIMIT=${THROTTLE_AUTH_LIMIT}
+      - POSTHOG_API_KEY=${POSTHOG_API_KEY}
+      - POSTHOG_HOST=${POSTHOG_HOST}
+
+  webapp:
+    image: rpw/webapp:local
+    build:
+      context: ./
+      dockerfile: packages/webapp/Dockerfile
+
+  # Upstream builds this from `docker/migration/Dockerfile`, which is
+  # `FROM bigcapitalhq/server:latest` — i.e. it would migrate using *upstream's*
+  # migrations, not ours. Reuse the server image we just built instead.
+  database_migration:
+    image: rpw/server:local
+    build: !reset null
+    working_dir: /app/packages/server
+    command:
+      - sh
+      - -c
+      - >
+        for i in $$(seq 1 60); do
+          node dist/cli.js system:migrate:latest && break;
+          echo "database not ready yet (attempt $$i), retrying in 5s...";
+          sleep 5;
+        done;
+        node dist/cli.js tenants:migrate:latest
