@@ -126,6 +126,10 @@ def signup_and_signin():
     )
     if status in (200, 201):
         ok(f"signed up {EMAIL}")
+    elif status >= 500:
+        # A 5xx here usually means the system database is not migrated yet —
+        # worth failing loudly rather than limping into a confusing sign-in error.
+        fail(f"sign-up failed with HTTP {status}", body)
     else:
         print(f"       sign-up returned {status} (expected if the account exists)")
 
@@ -140,6 +144,29 @@ def signup_and_signin():
         fail("sign-in response missing token/organization", body)
     ORG_ID = str(org)
     ok(f"signed in, organization-id={ORG_ID}")
+
+
+def guard_against_real_books():
+    """Refuse to write dummy invoices into books that hold real money.
+
+    The smoke test creates customers, invoices and payments. That is fine on a
+    scratch stack and a disaster on the real one, so it checks what it is
+    pointed at before it writes anything. `rpw/scripts/verify_stack.sh` runs it
+    against a throwaway stack and sets RPW_ALLOW_REAL_BOOKS itself.
+    """
+    if os.environ.get("RPW_ALLOW_REAL_BOOKS") == "1":
+        return
+    status, body = request("GET", "/organization/current")
+    name = ""
+    if status == 200 and isinstance(body, dict):
+        data = body.get("data") if isinstance(body.get("data"), dict) else body
+        name = str(data.get("name") or "")
+    if name and "test" not in name.lower():
+        fail(
+            f"refusing to run: '{name}' does not look like a test organization",
+            "This test writes dummy invoices and payments. Run it against a "
+            "scratch stack instead:  bash rpw/scripts/verify_stack.sh",
+        )
 
 
 def build_organization():
@@ -217,6 +244,7 @@ def main():
     print(f"\033[1mRPW Platform smoke test\033[0m  →  {BASE_URL}")
     wait_for_api()
     signup_and_signin()
+    guard_against_real_books()
     build_organization()
     accounts = get_accounts()
 
@@ -502,6 +530,54 @@ def main():
     if not income:
         fail("the invoice did not post to income in the profit & loss report", totals)
     ok(f"P&L shows income {income} and net income {net} — the ledger is posting")
+
+    step("RPW sales tax scaffolding (Ohio multi-county)")
+    status, counties = request("GET", "/rpw/sales-tax/counties")
+    if status != 200 or not isinstance(counties, list) or not counties:
+        fail("could not read the county rate table", counties)
+    by_name = {c.get("county_name") or c.get("countyName"): c for c in counties}
+    greene = by_name.get("Greene")
+    if not greene:
+        fail("Greene County is missing from the rate table", sorted(by_name)[:10])
+    ok(f"{len(counties)} counties loaded; Greene at {greene.get('combined_rate') or greene.get('combinedRate')}%")
+
+    unverified = [c for c in counties if not (c.get("verified_at") or c.get("verifiedAt"))]
+    if len(unverified) != len(counties):
+        fail("counties should ship unverified until a human checks them against ODT")
+    ok("every county ships unverified — collection cannot be switched on by accident")
+
+    status, resp = request("PUT", "/rpw/sales-tax/settings", {"collectionEnabled": True})
+    if status != 400:
+        fail("enabling collection with unverified rates should have been refused", resp)
+    ok("enabling collection is refused while rates are unverified")
+
+    status, resp = request(
+        "POST",
+        "/rpw/sales-tax/transaction-county",
+        {
+            "transactionType": "SaleInvoice",
+            "transactionId": invoice_id,
+            "countyId": greene["id"],
+        },
+    )
+    if status not in (200, 201):
+        fail("could not record a job-site county on the invoice", resp)
+    ok("job-site county recorded against the invoice")
+
+    status, resp = request("GET", f"/rpw/sales-tax/transaction-county/SaleInvoice/{invoice_id}")
+    if status != 200 or not resp:
+        fail("could not read the job-site county back", resp)
+    ok("job-site county reads back")
+
+    status, summary = request(
+        "GET", f"/rpw/sales-tax/reports/county-summary?fromDate={year_start}&toDate={year_end}"
+    )
+    if status != 200:
+        fail("county summary report failed", summary)
+    rows = summary.get("rows") or []
+    if not any((r.get("county_name") or r.get("countyName")) == "Greene" for r in rows):
+        fail("the invoice did not show up under Greene in the county summary", summary)
+    ok("county summary reports the invoice under Greene")
 
     step("Web app")
     status, html = request("GET", BASE_URL, raw=True)

@@ -7,6 +7,18 @@ const SUBSCRIPTION_TYPE = {
   MAIN: 'main',
 };
 export const getDashboardRoutes = () => [
+  // ── RPW custom pages (kept together so upstream rebases stay trivial) ──
+  {
+    path: '/rpw/sales-tax',
+    component: lazy(() =>
+      import('@/containers/RpwSalesTax/RpwSalesTaxPage').then((m) => ({
+        default: m.RpwSalesTaxPage,
+      })),
+    ),
+    breadcrumb: 'Ohio Sales Tax',
+    pageTitle: 'Ohio Sales Tax',
+  },
+
   // Accounts.
   {
     path: '/accounts/import',

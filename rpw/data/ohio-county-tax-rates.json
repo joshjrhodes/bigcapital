@@ -1,0 +1,655 @@
+{
+  "source": "Ohio Department of Taxation \u2014 Sales and Use Tax Rates by County",
+  "source_url": "https://www.tax.ohio.gov/wps/portal/gov/tax/business/sales-and-use-tax/rate-tables/by-county-q4-2025",
+  "effective_from": "2025-10-01",
+  "effective_to": "2025-12-31",
+  "state_rate": 5.75,
+  "verified": false,
+  "note": "Rates captured from the Ohio Department of Taxation's own table, NOT from memory and NOT from a rate-aggregator site (two aggregators disagreed with ODT on Greene County). This is the most recent table that was reachable at the time of writing; ODT republishes quarterly, so every rate must be re-checked against tax.ohio.gov before sales tax collection is switched on.",
+  "counties": [
+    {
+      "name": "Adams",
+      "odt_code": 1,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": false
+    },
+    {
+      "name": "Allen",
+      "odt_code": 2,
+      "combined_rate": 6.85,
+      "county_rate": 1.1,
+      "active": false
+    },
+    {
+      "name": "Ashland",
+      "odt_code": 3,
+      "combined_rate": 7.0,
+      "county_rate": 1.25,
+      "active": false
+    },
+    {
+      "name": "Ashtabula",
+      "odt_code": 4,
+      "combined_rate": 6.75,
+      "county_rate": 1.0,
+      "active": false
+    },
+    {
+      "name": "Athens",
+      "odt_code": 5,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": false
+    },
+    {
+      "name": "Auglaize",
+      "odt_code": 6,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": false
+    },
+    {
+      "name": "Belmont",
+      "odt_code": 7,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": false
+    },
+    {
+      "name": "Brown",
+      "odt_code": 8,
+      "combined_rate": 7.0,
+      "county_rate": 1.25,
+      "active": false
+    },
+    {
+      "name": "Butler",
+      "odt_code": 9,
+      "combined_rate": 6.5,
+      "county_rate": 0.75,
+      "active": true
+    },
+    {
+      "name": "Carroll",
+      "odt_code": 10,
+      "combined_rate": 6.75,
+      "county_rate": 1.0,
+      "active": false
+    },
+    {
+      "name": "Champaign",
+      "odt_code": 11,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": true
+    },
+    {
+      "name": "Clark",
+      "odt_code": 12,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": true
+    },
+    {
+      "name": "Clermont",
+      "odt_code": 13,
+      "combined_rate": 6.75,
+      "county_rate": 1.0,
+      "active": false
+    },
+    {
+      "name": "Clinton",
+      "odt_code": 14,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": true
+    },
+    {
+      "name": "Columbiana",
+      "odt_code": 15,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": false
+    },
+    {
+      "name": "Coshocton",
+      "odt_code": 16,
+      "combined_rate": 7.75,
+      "county_rate": 2.0,
+      "active": false
+    },
+    {
+      "name": "Crawford",
+      "odt_code": 17,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": false
+    },
+    {
+      "name": "Cuyahoga",
+      "odt_code": 18,
+      "combined_rate": 8.0,
+      "county_rate": 2.25,
+      "active": false
+    },
+    {
+      "name": "Darke",
+      "odt_code": 19,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": true
+    },
+    {
+      "name": "Defiance",
+      "odt_code": 20,
+      "combined_rate": 6.75,
+      "county_rate": 1.0,
+      "active": false
+    },
+    {
+      "name": "Delaware",
+      "odt_code": 21,
+      "combined_rate": 7.0,
+      "county_rate": 1.25,
+      "active": false
+    },
+    {
+      "name": "Delaware (COTA)",
+      "odt_code": 96,
+      "combined_rate": 8.0,
+      "county_rate": 2.25,
+      "active": false
+    },
+    {
+      "name": "Erie",
+      "odt_code": 22,
+      "combined_rate": 6.75,
+      "county_rate": 1.0,
+      "active": false
+    },
+    {
+      "name": "Fairfield",
+      "odt_code": 23,
+      "combined_rate": 6.75,
+      "county_rate": 1.0,
+      "active": false
+    },
+    {
+      "name": "Fairfield (COTA)",
+      "odt_code": 93,
+      "combined_rate": 7.75,
+      "county_rate": 2.0,
+      "active": false
+    },
+    {
+      "name": "Fayette",
+      "odt_code": 24,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": true
+    },
+    {
+      "name": "Franklin",
+      "odt_code": 25,
+      "combined_rate": 8.0,
+      "county_rate": 2.25,
+      "active": false
+    },
+    {
+      "name": "Fulton",
+      "odt_code": 26,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": false
+    },
+    {
+      "name": "Gallia",
+      "odt_code": 27,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": false
+    },
+    {
+      "name": "Geauga",
+      "odt_code": 28,
+      "combined_rate": 6.75,
+      "county_rate": 1.0,
+      "active": false
+    },
+    {
+      "name": "Greene",
+      "odt_code": 29,
+      "combined_rate": 6.75,
+      "county_rate": 1.0,
+      "active": true
+    },
+    {
+      "name": "Guernsey",
+      "odt_code": 30,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": false
+    },
+    {
+      "name": "Hamilton",
+      "odt_code": 31,
+      "combined_rate": 7.8,
+      "county_rate": 2.05,
+      "active": false
+    },
+    {
+      "name": "Hancock",
+      "odt_code": 32,
+      "combined_rate": 6.75,
+      "county_rate": 1.0,
+      "active": false
+    },
+    {
+      "name": "Hardin",
+      "odt_code": 33,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": false
+    },
+    {
+      "name": "Harrison",
+      "odt_code": 34,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": false
+    },
+    {
+      "name": "Henry",
+      "odt_code": 35,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": false
+    },
+    {
+      "name": "Highland",
+      "odt_code": 36,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": false
+    },
+    {
+      "name": "Hocking",
+      "odt_code": 37,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": false
+    },
+    {
+      "name": "Holmes",
+      "odt_code": 38,
+      "combined_rate": 7.0,
+      "county_rate": 1.25,
+      "active": false
+    },
+    {
+      "name": "Huron",
+      "odt_code": 39,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": false
+    },
+    {
+      "name": "Jackson",
+      "odt_code": 40,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": false
+    },
+    {
+      "name": "Jefferson",
+      "odt_code": 41,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": false
+    },
+    {
+      "name": "Knox",
+      "odt_code": 42,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": false
+    },
+    {
+      "name": "Lake",
+      "odt_code": 43,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": false
+    },
+    {
+      "name": "Lawrence",
+      "odt_code": 44,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": false
+    },
+    {
+      "name": "Licking",
+      "odt_code": 45,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": false
+    },
+    {
+      "name": "Licking (COTA)",
+      "odt_code": 94,
+      "combined_rate": 8.25,
+      "county_rate": 2.5,
+      "active": false
+    },
+    {
+      "name": "Logan",
+      "odt_code": 46,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": false
+    },
+    {
+      "name": "Lorain",
+      "odt_code": 47,
+      "combined_rate": 6.5,
+      "county_rate": 0.75,
+      "active": false
+    },
+    {
+      "name": "Lucas",
+      "odt_code": 48,
+      "combined_rate": 7.75,
+      "county_rate": 2.0,
+      "active": false
+    },
+    {
+      "name": "Madison",
+      "odt_code": 49,
+      "combined_rate": 7.0,
+      "county_rate": 1.25,
+      "active": true
+    },
+    {
+      "name": "Mahoning",
+      "odt_code": 50,
+      "combined_rate": 7.5,
+      "county_rate": 1.75,
+      "active": false
+    },
+    {
+      "name": "Marion",
+      "odt_code": 51,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": false
+    },
+    {
+      "name": "Medina",
+      "odt_code": 52,
+      "combined_rate": 6.75,
+      "county_rate": 1.0,
+      "active": false
+    },
+    {
+      "name": "Meigs",
+      "odt_code": 53,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": false
+    },
+    {
+      "name": "Mercer",
+      "odt_code": 54,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": false
+    },
+    {
+      "name": "Miami",
+      "odt_code": 55,
+      "combined_rate": 7.0,
+      "county_rate": 1.25,
+      "active": true
+    },
+    {
+      "name": "Monroe",
+      "odt_code": 56,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": false
+    },
+    {
+      "name": "Montgomery",
+      "odt_code": 57,
+      "combined_rate": 7.5,
+      "county_rate": 1.75,
+      "active": true
+    },
+    {
+      "name": "Morgan",
+      "odt_code": 58,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": false
+    },
+    {
+      "name": "Morrow",
+      "odt_code": 59,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": false
+    },
+    {
+      "name": "Muskingum",
+      "odt_code": 60,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": false
+    },
+    {
+      "name": "Noble",
+      "odt_code": 61,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": false
+    },
+    {
+      "name": "Ottawa",
+      "odt_code": 62,
+      "combined_rate": 7.0,
+      "county_rate": 1.25,
+      "active": false
+    },
+    {
+      "name": "Paulding",
+      "odt_code": 63,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": false
+    },
+    {
+      "name": "Perry",
+      "odt_code": 64,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": false
+    },
+    {
+      "name": "Pickaway",
+      "odt_code": 65,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": false
+    },
+    {
+      "name": "Pike",
+      "odt_code": 66,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": false
+    },
+    {
+      "name": "Portage",
+      "odt_code": 67,
+      "combined_rate": 7.0,
+      "county_rate": 1.25,
+      "active": false
+    },
+    {
+      "name": "Preble",
+      "odt_code": 68,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": true
+    },
+    {
+      "name": "Putnam",
+      "odt_code": 69,
+      "combined_rate": 7.0,
+      "county_rate": 1.25,
+      "active": false
+    },
+    {
+      "name": "Richland",
+      "odt_code": 70,
+      "combined_rate": 7.0,
+      "county_rate": 1.25,
+      "active": false
+    },
+    {
+      "name": "Ross",
+      "odt_code": 71,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": false
+    },
+    {
+      "name": "Sandusky",
+      "odt_code": 72,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": false
+    },
+    {
+      "name": "Scioto",
+      "odt_code": 73,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": false
+    },
+    {
+      "name": "Seneca",
+      "odt_code": 74,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": false
+    },
+    {
+      "name": "Shelby",
+      "odt_code": 75,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": false
+    },
+    {
+      "name": "Stark",
+      "odt_code": 76,
+      "combined_rate": 6.5,
+      "county_rate": 0.75,
+      "active": false
+    },
+    {
+      "name": "Summit",
+      "odt_code": 77,
+      "combined_rate": 6.75,
+      "county_rate": 1.0,
+      "active": false
+    },
+    {
+      "name": "Trumbull",
+      "odt_code": 78,
+      "combined_rate": 6.75,
+      "county_rate": 1.0,
+      "active": false
+    },
+    {
+      "name": "Tuscarawas",
+      "odt_code": 79,
+      "combined_rate": 6.75,
+      "county_rate": 1.0,
+      "active": false
+    },
+    {
+      "name": "Union",
+      "odt_code": 80,
+      "combined_rate": 7.0,
+      "county_rate": 1.25,
+      "active": false
+    },
+    {
+      "name": "Union (COTA)",
+      "odt_code": 98,
+      "combined_rate": 8.0,
+      "county_rate": 2.25,
+      "active": false
+    },
+    {
+      "name": "Van Wert",
+      "odt_code": 81,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": false
+    },
+    {
+      "name": "Vinton",
+      "odt_code": 82,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": false
+    },
+    {
+      "name": "Warren",
+      "odt_code": 83,
+      "combined_rate": 6.75,
+      "county_rate": 1.0,
+      "active": true
+    },
+    {
+      "name": "Washington",
+      "odt_code": 84,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": false
+    },
+    {
+      "name": "Wayne",
+      "odt_code": 85,
+      "combined_rate": 6.5,
+      "county_rate": 0.75,
+      "active": false
+    },
+    {
+      "name": "Williams",
+      "odt_code": 86,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": false
+    },
+    {
+      "name": "Wood",
+      "odt_code": 87,
+      "combined_rate": 6.75,
+      "county_rate": 1.0,
+      "active": false
+    },
+    {
+      "name": "Wyandot",
+      "odt_code": 88,
+      "combined_rate": 7.25,
+      "county_rate": 1.5,
+      "active": false
+    }
+  ]
+}

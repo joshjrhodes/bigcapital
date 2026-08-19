@@ -772,6 +772,12 @@ export const SidebarMenu: SidebarMenuItem[] = [
           ability: PreferencesAbility.Mutate,
         },
       },
+      // ── RPW ──
+      {
+        text: 'Ohio Sales Tax',
+        href: '/rpw/sales-tax',
+        type: ISidebarMenuItemType.Link,
+      },
     ],
   },
 ];

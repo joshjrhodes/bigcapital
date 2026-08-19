@@ -108,6 +108,9 @@ import { EEModule } from '../EE/EE.module';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { AppThrottleModule } from './AppThrottle.module';
 
+// ── RPW custom modules (keep together so upstream rebases stay trivial) ──
+import { RpwSalesTaxModule } from '../RpwSalesTax/RpwSalesTax.module';
+
 @Module({
   imports: [
     ServeStaticModule.forRoot({
@@ -261,6 +264,9 @@ import { AppThrottleModule } from './AppThrottle.module';
     ContactsModule,
     SocketModule,
     EEModule,
+
+    // ── RPW custom modules ──
+    RpwSalesTaxModule,
     ExchangeRatesModule,
   ],
   controllers: [AppController],

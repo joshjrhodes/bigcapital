@@ -1,0 +1,50 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Disposable verification stack.
+#
+# Same images and same wiring as the real stack, but on its own port and its own
+# volumes, so `rpw/scripts/verify_stack.sh` can create dummy invoices, prove the
+# migrations run from scratch, and then throw the whole thing away without ever
+# touching the real books.
+#
+# Never point this at the production volumes: the volume names below MUST differ
+# from the ones in docker-compose.prod.yml, which are fixed names that ignore the
+# compose project prefix.
+#
+#   COMPOSE_FILE=docker-compose.prod.yml:docker-compose.rpw.yml:docker-compose.test.yml \
+#     docker compose -p rpwtest up -d
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  proxy:
+    container_name: rpwtest-proxy
+    ports: !override
+      - '127.0.0.1:${RPW_TEST_PORT:-8081}:80'
+
+  server:
+    container_name: rpwtest-server
+    environment:
+      # A scratch stack must never be reachable by anything that matters, and
+      # the smoke test needs to be able to register its own account.
+      - SIGNUP_DISABLED=false
+
+  webapp:
+    container_name: rpwtest-webapp
+
+  mysql:
+    container_name: rpwtest-mysql
+    volumes: !override
+      - mysql:/var/lib/mysql
+
+  redis:
+    container_name: rpwtest-redis
+    volumes: !override
+      - redis:/data
+
+  database_migration:
+    container_name: rpwtest-database-migration
+
+volumes:
+  mysql:
+    name: rpwtest_mysql
+  redis:
+    name: rpwtest_redis
