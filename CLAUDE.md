@@ -24,6 +24,25 @@ This repo is a fork of [bigcapitalhq/bigcapital](https://github.com/bigcapitalhq
 6. **Answers over screenshots.** Status reports lead with what works and what is blocked, in one
    or two sentences — Josh often reads them on a phone.
 
+## Branches
+
+- `develop` — clean mirror of `upstream/develop`. Never commit here.
+- `rpw` — our working branch, and the one the laptop runs. All custom work lands here.
+
+Pulling upstream in:
+
+```bash
+git fetch upstream
+git checkout develop && git merge --ff-only upstream/develop
+git checkout rpw && git rebase develop     # then rebuild images and re-run the smoke test
+```
+
+## Where we are
+
+Phase 0 is done: the stack runs in Docker on the laptop from this fork's own code, with a test
+organization and a green end-to-end smoke test (`python3 rpw/scripts/smoke_test.py`).
+Next up is Phase 0.5 (backups) — see `PROJECT_BRIEF.md`.
+
 ## Verified stack (do not trust second-hand descriptions — this was checked against the repo)
 
 | Piece | What it actually is |
