@@ -23,5 +23,7 @@ import { ProfitLossSheetApplication } from './ProfitLossSheetApplication';
     ProfitLossSheetMeta,
     ProfitLossSheetRepository,
   ],
+  // ── RPW ── the tax-reserve widget derives its target from this service.
+  exports: [ProfitLossSheetService],
 })
 export class ProfitLossSheetModule {}

@@ -112,6 +112,7 @@ import { AppThrottleModule } from './AppThrottle.module';
 import { RpwSalesTaxModule } from '../RpwSalesTax/RpwSalesTax.module';
 import { RpwPdfDesignerModule } from '../RpwPdfDesigner/RpwPdfDesigner.module';
 import { RpwCrmModule } from '../RpwCrm/RpwCrm.module';
+import { RpwFinanceModule } from '../RpwFinance/RpwFinance.module';
 
 @Module({
   imports: [
@@ -271,6 +272,7 @@ import { RpwCrmModule } from '../RpwCrm/RpwCrm.module';
     RpwSalesTaxModule,
     RpwPdfDesignerModule,
     RpwCrmModule,
+    RpwFinanceModule,
     ExchangeRatesModule,
   ],
   controllers: [AppController],

@@ -580,6 +580,14 @@ def main():
         fail("the invoice did not post to income in the profit & loss report", totals)
     ok(f"P&L shows income {income} and net income {net} — the ledger is posting")
 
+    import io
+    import uuid
+
+    png = bytes.fromhex(
+        "89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c489"
+        "0000000d4944415478da63f8cfc00000030101001836dd8f0000000049454e44ae426082"
+    )
+
     step("RPW visual PDF designer")
     status, resp = request("POST", "/rpw/pdf-designer/designs/ensure-stock", {})
     if status not in (200, 201):
@@ -759,14 +767,114 @@ def main():
         fail("a completed follow-up is still showing as due", board)
     ok("marking it done clears it")
 
-    step("Attachments (object storage)")
-    import io
-    import uuid
+    step("RPW finance (tax reserve, equipment register, calendar)")
+    status, before = request("GET", "/rpw/finance/tax-reserve")
+    if status != 200:
+        fail("could not read the tax reserve", before)
+    profit_before = pick(before, "ytdNetProfit", "ytd_net_profit") or 0
+    target_before = pick(before, "reserveTarget", "reserve_target") or 0
+    rate = pick(before, "reserveRatePercent", "reserve_rate_percent") or 25
+    ok(f"reserve reads: profit {profit_before}, target {target_before} ({rate}%)")
 
-    png = bytes.fromhex(
-        "89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c489"
-        "0000000d4944415478da63f8cfc00000030101001836dd8f0000000049454e44ae426082"
+    # The brief's acceptance: a $2,000 Sec-179 purchase lowers profit by 2,000
+    # and the reserve target by rate% of that.
+    equip_account = find_account(accounts, "other-expenses", "other expenses")
+    status, resp = request(
+        "POST",
+        "/expenses",
+        {
+            "paymentDate": today.isoformat(),
+            "paymentAccountId": deposit["id"],
+            "referenceNo": f"SMOKE-EQ-{RUN_ID}",
+            "description": "Used lighting rig — Section 179.",
+            "publish": True,
+            "categories": [
+                {
+                    "index": 1,
+                    "expenseAccountId": (equip_account or expense_account)["id"],
+                    "amount": 2000,
+                    "description": "Chauvet Rogue R2X Wash (pair), used",
+                }
+            ],
+        },
     )
+    if status not in (200, 201):
+        fail("could not record the equipment expense", resp)
+
+    status, after = request("GET", "/rpw/finance/tax-reserve")
+    profit_after = pick(after, "ytdNetProfit", "ytd_net_profit") or 0
+    target_after = pick(after, "reserveTarget", "reserve_target") or 0
+    if round(profit_before - profit_after) != 2000:
+        fail(
+            "a $2,000 purchase did not lower YTD net profit by $2,000",
+            f"before {profit_before}, after {profit_after}",
+        )
+    # The target is rate% of profit, floored at zero — a loss does not create
+    # a negative reserve.
+    expected_target = max(0.0, round(profit_after * rate) / 100)
+    if abs(target_after - expected_target) > 0.01 or target_after >= target_before:
+        fail(
+            "the reserve target did not fall with the purchase",
+            f"target before {target_before}, after {target_after}, expected {expected_target}",
+        )
+    ok(
+        f"$2,000 Sec-179 purchase lowered profit to {profit_after} "
+        f"and the target from {target_before} to {target_after}"
+    )
+
+    # Bill of sale into object storage, then the register entry that carries it.
+    boundary2 = "----rpw" + uuid.uuid4().hex
+    buffer2 = io.BytesIO()
+    buffer2.write(f"--{boundary2}\r\n".encode())
+    buffer2.write(
+        b'Content-Disposition: form-data; name="file"; filename="bill-of-sale.png"\r\n'
+    )
+    buffer2.write(b"Content-Type: image/png\r\n\r\n")
+    buffer2.write(png)
+    buffer2.write(f"\r\n--{boundary2}--\r\n".encode())
+    status, uploaded2 = request(
+        "POST",
+        "/attachments",
+        headers={"Content-Type": f"multipart/form-data; boundary={boundary2}"},
+        body_bytes=buffer2.getvalue(),
+    )
+    if status not in (200, 201):
+        fail("could not upload the bill of sale", uploaded2)
+    bill_of_sale_key = pick(uploaded2, "key")
+
+    status, purchase = request(
+        "POST",
+        "/rpw/finance/equipment",
+        {
+            "tag": "section179",
+            "description": "Chauvet Rogue R2X Wash (pair), used",
+            "serialNumber": "SN-2024-88371 / SN-2024-88372",
+            "amount": 2000,
+            "purchasedOn": today.isoformat(),
+            "vendorName": "Dayton Stage Supply",
+            "attachmentKey": bill_of_sale_key,
+        },
+    )
+    if status not in (200, 201):
+        fail("could not register the equipment purchase", purchase)
+    ok("equipment registered with serial and bill of sale")
+
+    status, report = request(f"GET", f"/rpw/finance/equipment/report?year={today.year}")
+    if status != 200:
+        fail("the equipment report failed", report)
+    s179 = report.get("section179") or {}
+    if s179.get("count") != 1 or round(float(s179.get("total") or 0)) != 2000:
+        fail("the report does not show the Sec-179 purchase", report)
+    if s179.get("missing_serial") or s179.get("missingSerial") or s179.get("missing_bill_of_sale") or s179.get("missingBillOfSale"):
+        fail("the report counts the serial or bill of sale as missing", s179)
+    ok("equipment report shows it: 1 item, $2,000, serial and bill of sale on file")
+
+    status, calendar = request("GET", "/rpw/finance/tax-calendar")
+    if status != 200 or len(calendar or []) < 4:
+        fail("the tax calendar is empty", calendar)
+    ok(f"next estimated payment: {calendar[0].get('label')} on {calendar[0].get('date')}")
+
+    step("Attachments (object storage)")
     boundary = "----rpw" + uuid.uuid4().hex
     buffer = io.BytesIO()
     buffer.write(f"--{boundary}\r\n".encode())
