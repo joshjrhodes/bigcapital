@@ -56,6 +56,11 @@ Ohio multi-county sales tax scaffolding is in with collection switched off. Outs
 - **Brand assets** — the PDF uses a CSS maker's-plate mark and Oswald/Nunito Sans standing in for
   DDC Hardware 45/Avenir. Josh reviews `~/rpw-sample-invoice.pdf` and supplies the real files.
 
+Phase 3 (visual template designer) is built: pdfme-based drag-and-drop editing at
+`/rpw/document-designer`, versioned designs with rollback, preview with real or sample data,
+and automatic fallback to the coded template when a design is missing or fails. Designs ship
+**inactive** — the Phase 1 coded layout stays in force until Josh activates one.
+
 ## Verifying changes
 
 Never run the smoke test against the real books — it writes dummy invoices, and it refuses to.

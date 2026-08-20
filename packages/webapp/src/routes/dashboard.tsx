@@ -18,6 +18,16 @@ export const getDashboardRoutes = () => [
     breadcrumb: 'Ohio Sales Tax',
     pageTitle: 'Ohio Sales Tax',
   },
+  {
+    path: '/rpw/document-designer',
+    component: lazy(() =>
+      import('@/containers/RpwPdfDesigner/RpwPdfDesignerPage').then((m) => ({
+        default: m.RpwPdfDesignerPage,
+      })),
+    ),
+    breadcrumb: 'Document Designer',
+    pageTitle: 'Document Designer',
+  },
 
   // Accounts.
   {

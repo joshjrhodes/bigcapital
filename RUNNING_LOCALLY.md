@@ -101,6 +101,22 @@ sed -i 's/^SIGNUP_DISABLED=false/SIGNUP_DISABLED=true/' .env && docker compose u
 The provisioning script is idempotent, so re-running it on an existing organization only adds what
 is missing.
 
+## Designing the documents
+
+**Sidebar → Document Designer**, or http://localhost:8080/rpw/document-designer
+
+Drag fields around, resize them, change fonts and colours, then **Preview** to see it
+with realistic data. **Save** writes a new version — nothing is overwritten, and **Versions**
+rolls back to any earlier save.
+
+A design does nothing until you press **Use for documents**. Until then, estimates and
+invoices keep using the built-in layout. And if an active design ever fails to render,
+documents fall back to the built-in layout automatically — an edit here cannot stop you
+invoicing.
+
+Field names are the wiring: `logo`, `bill_to`, `items`, `total` and so on are filled from
+the document at generation time. Renaming a field disconnects it from its data.
+
 ## Ohio sales tax
 
 The county rate table lives at **http://localhost:8080/rpw/sales-tax** (sidebar → Ohio Sales Tax).

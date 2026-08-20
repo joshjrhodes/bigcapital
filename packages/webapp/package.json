@@ -145,7 +145,7 @@
   },
   "scripts": {
     "dev": "cross-env PORT=4000 vite",
-    "build": "vite build",
+    "build": "cross-env NODE_OPTIONS=--max-old-space-size=4096 vite build",
     "preview": "cross-env PORT=4173 vite preview",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,md}\"",

@@ -778,6 +778,11 @@ export const SidebarMenu: SidebarMenuItem[] = [
         href: '/rpw/sales-tax',
         type: ISidebarMenuItemType.Link,
       },
+      {
+        text: 'Document Designer',
+        href: '/rpw/document-designer',
+        type: ISidebarMenuItemType.Link,
+      },
     ],
   },
 ];
