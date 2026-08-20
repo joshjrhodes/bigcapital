@@ -61,6 +61,11 @@ Phase 3 (visual template designer) is built: pdfme-based drag-and-drop editing a
 and automatic fallback to the coded template when a design is missing or fails. Designs ship
 **inactive** — the Phase 1 coded layout stays in force until Josh activates one.
 
+Phase 4 (CRM layer) is built: per-customer timeline of notes plus auto-logged estimate/invoice/
+payment activity, referral source, follow-ups with due/snooze/done, and a 7am email digest of
+what is due. All of it hangs off `contacts.id` and event subscribers — no accounting module was
+modified.
+
 ## Verifying changes
 
 Never run the smoke test against the real books — it writes dummy invoices, and it refuses to.

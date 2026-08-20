@@ -117,6 +117,17 @@ invoicing.
 Field names are the wiring: `logo`, `bill_to`, `items`, `total` and so on are filled from
 the document at generation time. Renaming a field disconnects it from its data.
 
+## Clients (notes and follow-ups)
+
+**Sidebar → Clients**, or http://localhost:8080/rpw/clients
+
+What needs doing is at the top — anything due today, with overdue items staying put rather
+than ageing out of sight. Below that, pick a client to see their history: notes you write,
+interleaved with estimates, invoices and payments logging themselves as they happen.
+
+Set a follow-up with a date and a note ("chase the Easter estimate, in 5 days"). Whatever is
+due also arrives by email at 7am, so it does not depend on you opening the app.
+
 ## Ohio sales tax
 
 The county rate table lives at **http://localhost:8080/rpw/sales-tax** (sidebar → Ohio Sales Tax).

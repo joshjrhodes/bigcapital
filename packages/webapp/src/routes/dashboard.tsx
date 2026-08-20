@@ -28,6 +28,16 @@ export const getDashboardRoutes = () => [
     breadcrumb: 'Document Designer',
     pageTitle: 'Document Designer',
   },
+  {
+    path: '/rpw/clients',
+    component: lazy(() =>
+      import('@/containers/RpwCrm/RpwCrmPage').then((m) => ({
+        default: m.RpwCrmPage,
+      })),
+    ),
+    breadcrumb: 'Clients',
+    pageTitle: 'Clients',
+  },
 
   // Accounts.
   {

@@ -783,6 +783,11 @@ export const SidebarMenu: SidebarMenuItem[] = [
         href: '/rpw/document-designer',
         type: ISidebarMenuItemType.Link,
       },
+      {
+        text: 'Clients',
+        href: '/rpw/clients',
+        type: ISidebarMenuItemType.Link,
+      },
     ],
   },
 ];
