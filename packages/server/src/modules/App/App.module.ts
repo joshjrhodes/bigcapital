@@ -111,6 +111,7 @@ import { AppThrottleModule } from './AppThrottle.module';
 // ── RPW custom modules (keep together so upstream rebases stay trivial) ──
 import { RpwSalesTaxModule } from '../RpwSalesTax/RpwSalesTax.module';
 import { RpwPdfDesignerModule } from '../RpwPdfDesigner/RpwPdfDesigner.module';
+import { RpwCrmModule } from '../RpwCrm/RpwCrm.module';
 
 @Module({
   imports: [
@@ -269,6 +270,7 @@ import { RpwPdfDesignerModule } from '../RpwPdfDesigner/RpwPdfDesigner.module';
     // ── RPW custom modules ──
     RpwSalesTaxModule,
     RpwPdfDesignerModule,
+    RpwCrmModule,
     ExchangeRatesModule,
   ],
   controllers: [AppController],

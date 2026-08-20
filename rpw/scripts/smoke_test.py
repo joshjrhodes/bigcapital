@@ -669,6 +669,96 @@ def main():
         fail("could not deactivate the design", resp)
     ok("design deactivated — back to the coded template")
 
+    step("RPW CRM (notes, timeline, follow-ups)")
+    status, customers = request("GET", "/rpw/crm/customers")
+    if status != 200 or not customers:
+        fail("the CRM customer list is empty", customers)
+    crm_customer = next(
+        (c for c in customers if pick(c, "id") == customer_id), customers[0]
+    )
+    ok(f"{len(customers)} customer(s) visible to the CRM")
+
+    status, resp = request(
+        "PUT",
+        f"/rpw/crm/customers/{customer_id}/referral-source",
+        {"referralSource": "Referred by Dayton Event Group"},
+    )
+    if status not in (200, 201):
+        fail("could not record a referral source", resp)
+    ok("referral source recorded")
+
+    status, resp = request(
+        "POST",
+        f"/rpw/crm/customers/{customer_id}/notes",
+        {"body": "Walked the sanctuary — needs a second truss for Easter."},
+    )
+    if status not in (200, 201):
+        fail("could not add a note", resp)
+    ok("note added")
+
+    # The timeline should carry the note AND the events logged automatically
+    # when the estimate and invoice were created earlier in this run.
+    status, timeline = request("GET", f"/rpw/crm/customers/{customer_id}/timeline")
+    if status != 200 or not timeline:
+        fail("the timeline is empty", timeline)
+    kinds = {entry.get("kind") for entry in timeline}
+    event_types = {entry.get("event_type") or entry.get("eventType") for entry in timeline}
+    if "note" not in kinds:
+        fail("the note is missing from the timeline", timeline[:3])
+    if not any(t and t.startswith("invoice") for t in event_types):
+        fail("invoice activity was not logged to the timeline", sorted(filter(None, event_types)))
+    ok(
+        f"timeline has {len(timeline)} entries, auto-logged: "
+        f"{', '.join(sorted(t for t in event_types if t))}"
+    )
+
+    # The brief's acceptance path: set a follow-up, see it when it comes due.
+    from datetime import date as _date, timedelta as _td
+
+    due_day = (_date.today() + _td(days=5)).isoformat()
+    status, follow_up = request(
+        "POST",
+        "/rpw/crm/follow-ups",
+        {
+            "contactId": customer_id,
+            "referenceType": "SaleEstimate",
+            "referenceId": estimate_id,
+            "dueOn": due_day,
+            "note": "Chase the Easter estimate",
+        },
+    )
+    if status not in (200, 201):
+        fail("could not create a follow-up", follow_up)
+    follow_up_id = pick(follow_up, "id")
+    ok(f"follow-up set for {due_day}")
+
+    status, board = request("GET", f"/rpw/crm/follow-ups?today={_date.today().isoformat()}")
+    if status != 200:
+        fail("could not read the follow-up board", board)
+    if any(pick(f, "id") == follow_up_id for f in board.get("due", [])):
+        fail("a follow-up due in five days should not be in today's due list")
+    if not any(pick(f, "id") == follow_up_id for f in board.get("upcoming", [])):
+        fail("the follow-up is missing from the upcoming list", board)
+    ok("not due today, and listed as upcoming")
+
+    status, board = request("GET", f"/rpw/crm/follow-ups?today={due_day}")
+    if status != 200 or not any(
+        pick(f, "id") == follow_up_id for f in board.get("due", [])
+    ):
+        fail("the follow-up did not surface on the day it is due", board)
+    due_entry = next(f for f in board["due"] if pick(f, "id") == follow_up_id)
+    if not (due_entry.get("contact_name") or due_entry.get("contactName")):
+        fail("the due follow-up does not say who it is about", due_entry)
+    ok("surfaces on the day it is due, with the client's name")
+
+    status, resp = request("PUT", f"/rpw/crm/follow-ups/{follow_up_id}/done", {})
+    if status not in (200, 201):
+        fail("could not mark the follow-up done", resp)
+    status, board = request("GET", f"/rpw/crm/follow-ups?today={due_day}")
+    if any(pick(f, "id") == follow_up_id for f in board.get("due", [])):
+        fail("a completed follow-up is still showing as due", board)
+    ok("marking it done clears it")
+
     step("Attachments (object storage)")
     import io
     import uuid
