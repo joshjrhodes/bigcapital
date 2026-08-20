@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { BullBoardModule } from '@bull-board/nestjs';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { BullModule } from '@nestjs/bullmq';
@@ -44,9 +44,13 @@ import { SaleEstimateAutoIncrementSubscriber } from './subscribers/SaleEstimateA
 import { BulkDeleteSaleEstimatesService } from './BulkDeleteSaleEstimates.service';
 import { ValidateBulkDeleteSaleEstimatesService } from './ValidateBulkDeleteSaleEstimates.service';
 import { SendSaleEstimateMailProcess } from './processes/SendSaleEstimateMail.process';
+import { RpwPdfDesignerModule } from '../RpwPdfDesigner/RpwPdfDesigner.module';
 
 @Module({
   imports: [
+    // ── RPW ── the visual PDF designer, used in preference to the coded
+    // template when a design is active.
+    forwardRef(() => RpwPdfDesignerModule),
     TenancyModule,
     TenancyDatabaseModule,
     DynamicListModule,
@@ -101,6 +105,8 @@ import { SendSaleEstimateMailProcess } from './processes/SendSaleEstimateMail.pr
     SaleEstimatesImportable,
     GetSaleEstimateMailStateService,
     GetSaleEstimateMailTemplateService,
+    // ── RPW ── the designer previews with real estimate data.
+    GetSaleEstimatePdf,
   ],
 })
 export class SaleEstimatesModule {}

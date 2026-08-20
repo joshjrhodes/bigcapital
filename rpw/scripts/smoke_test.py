@@ -580,6 +580,95 @@ def main():
         fail("the invoice did not post to income in the profit & loss report", totals)
     ok(f"P&L shows income {income} and net income {net} — the ledger is posting")
 
+    step("RPW visual PDF designer")
+    status, resp = request("POST", "/rpw/pdf-designer/designs/ensure-stock", {})
+    if status not in (200, 201):
+        fail("could not prepare the stock designs", resp)
+    status, designs = request("GET", "/rpw/pdf-designer/designs?resource=SaleInvoice")
+    if status != 200 or not designs:
+        fail("no invoice design was created", designs)
+    design_id = pick(designs[0], "id")
+    ok(f"stock design created (id {design_id})")
+
+    status, preview = request(
+        "POST", "/rpw/pdf-designer/preview", {"resource": "SaleInvoice"}, raw=True
+    )
+    if status not in (200, 201) or not (
+        isinstance(preview, bytes) and preview.startswith(b"%PDF")
+    ):
+        fail("the designer preview did not render", preview if not isinstance(preview, bytes) else preview[:200])
+    ok(f"preview renders through pdfme ({len(preview)} bytes)")
+
+    status, resp = request("PUT", f"/rpw/pdf-designer/designs/{design_id}/activate", {})
+    if status not in (200, 201):
+        fail(f"could not activate the design (HTTP {status})", resp)
+    ok("design activated for invoices")
+
+    status, designed_pdf = request(
+        "GET",
+        f"/sale-invoices/{invoice_id}",
+        headers={"Accept": "application/pdf"},
+        raw=True,
+    )
+    if status != 200 or not (
+        isinstance(designed_pdf, bytes) and designed_pdf.startswith(b"%PDF")
+    ):
+        fail("the invoice did not render through the active design", designed_pdf[:200])
+    # pdfme output is markedly smaller than the Chromium-rendered HTML, which is
+    # how we know which path produced it.
+    ok(f"invoice renders through the design ({len(designed_pdf)} bytes)")
+
+    # The point of the fallback: a design Josh breaks must not stop invoicing.
+    status, resp = request(
+        "PUT",
+        f"/rpw/pdf-designer/designs/{design_id}",
+        {"template": {"basePdf": "not-a-pdf", "schemas": [[{"broken": True}]]}, "note": "deliberately broken"},
+    )
+    if status not in (200, 201):
+        fail("could not save the broken template", resp)
+    status, fallback_pdf = request(
+        "GET",
+        f"/sale-invoices/{invoice_id}",
+        headers={"Accept": "application/pdf"},
+        raw=True,
+    )
+    if status != 200 or not (
+        isinstance(fallback_pdf, bytes) and fallback_pdf.startswith(b"%PDF")
+    ):
+        fail("a broken design took the invoice PDF down with it", fallback_pdf[:200])
+    if len(fallback_pdf) <= len(designed_pdf):
+        fail(
+            "the broken design did not fall back to the coded template",
+            f"designed {len(designed_pdf)} bytes vs fallback {len(fallback_pdf)} bytes",
+        )
+    ok(f"a broken design falls back to the coded template ({len(fallback_pdf)} bytes)")
+
+    status, versions = request("GET", f"/rpw/pdf-designer/designs/{design_id}/versions")
+    if status != 200 or len(versions) < 2:
+        fail("version history is missing", versions)
+    first_version = [v for v in versions if pick(v, "version") == 1][0]
+    status, resp = request(
+        "POST",
+        f"/rpw/pdf-designer/designs/{design_id}/versions/{pick(first_version, 'id')}/restore",
+        {},
+    )
+    if status not in (200, 201):
+        fail("could not roll back to the first version", resp)
+    status, restored_pdf = request(
+        "GET",
+        f"/sale-invoices/{invoice_id}",
+        headers={"Accept": "application/pdf"},
+        raw=True,
+    )
+    if status != 200 or len(restored_pdf) > len(fallback_pdf):
+        fail("rolling back did not restore the working design", f"{len(restored_pdf)} bytes")
+    ok(f"rollback restores the working design ({len(restored_pdf)} bytes)")
+
+    status, resp = request("PUT", f"/rpw/pdf-designer/designs/{design_id}/deactivate", {})
+    if status not in (200, 201):
+        fail("could not deactivate the design", resp)
+    ok("design deactivated — back to the coded template")
+
     step("Attachments (object storage)")
     import io
     import uuid

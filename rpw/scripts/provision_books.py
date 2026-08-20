@@ -440,6 +440,13 @@ def main():
         created += 1
     print(f"\n  {created} item(s) added, {len(ITEMS) - created} already in place")
 
+    step("PDF designs")
+    status, resp = api.post("/rpw/pdf-designer/designs/ensure-stock", {})
+    if status in (200, 201):
+        ok("stock design available in the designer (inactive until you activate it)")
+    else:
+        skip(f"could not prepare the stock designs ({status})")
+
     logo_key = upload_logo(api)
     provision_pdf_templates(api, logo_key)
 

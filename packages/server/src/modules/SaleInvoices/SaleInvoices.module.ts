@@ -63,9 +63,13 @@ import { SaleInvoicesImportable } from './commands/SaleInvoicesImportable';
 import { PaymentLinksModule } from '../PaymentLinks/PaymentLinks.module';
 import { BulkDeleteSaleInvoicesService } from './BulkDeleteSaleInvoices.service';
 import { ValidateBulkDeleteSaleInvoicesService } from './ValidateBulkDeleteSaleInvoices.service';
+import { RpwPdfDesignerModule } from '../RpwPdfDesigner/RpwPdfDesigner.module';
 
 @Module({
   imports: [
+    // ── RPW ── the visual PDF designer, used in preference to the coded
+    // template when a design is active.
+    forwardRef(() => RpwPdfDesignerModule),
     TenancyModule,
     TenancyDatabaseModule,
     PdfTemplatesModule,

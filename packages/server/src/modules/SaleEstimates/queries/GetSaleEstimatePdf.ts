@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, forwardRef } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { GetSaleEstimate } from './GetSaleEstimate.service';
 import { transformEstimateToPdfTemplate } from '../utils';
@@ -14,6 +14,7 @@ import {
   renderRpwEstimatePaperTemplateHtml,
 } from '@bigcapital/pdf-templates';
 import { isRpwPdfTemplateName } from '@/modules/RpwBranding/RpwPdfTemplate.utils';
+import { RpwPdfGeneratorService } from '@/modules/RpwPdfDesigner/RpwPdfGenerator.service';
 
 @Injectable()
 export class GetSaleEstimatePdf {
@@ -22,6 +23,10 @@ export class GetSaleEstimatePdf {
     private readonly getSaleEstimate: GetSaleEstimate,
     private readonly estimatePdfTemplate: SaleEstimatePdfTemplate,
     private readonly eventPublisher: EventEmitter2,
+
+    // ── RPW ── the visual designer, when a layout is active for estimates.
+    @Inject(forwardRef(() => RpwPdfGeneratorService))
+    private readonly rpwPdfGenerator: RpwPdfGeneratorService,
 
     @Inject(PdfTemplateModel.name)
     private readonly pdfTemplateModel: TenantModelProxy<
@@ -57,6 +62,21 @@ export class GetSaleEstimatePdf {
     saleEstimateId: number,
   ): Promise<[Buffer, string]> {
     const filename = await this.getSaleEstimateFilename(saleEstimateId);
+
+    // ── RPW ── see SaleInvoicePdf: a designed layout takes precedence, and a
+    // failure there falls through to the coded template rather than surfacing.
+    const brandingAttributes =
+      await this.getEstimateBrandingAttributes(saleEstimateId);
+    const designedPdf = await this.rpwPdfGenerator.tryGenerate(
+      'SaleEstimate',
+      brandingAttributes,
+    );
+    if (designedPdf) {
+      await this.eventPublisher.emitAsync(events.saleEstimate.onPdfViewed, {
+        saleEstimateId,
+      });
+      return [designedPdf, filename];
+    }
 
     // Retrieves the sale estimate html.
     const htmlContent = await this.saleEstimateHtml(saleEstimateId);
