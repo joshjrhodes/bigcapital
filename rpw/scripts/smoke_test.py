@@ -359,13 +359,17 @@ def main():
     )
     if status not in (200, 201):
         fail("could not create an estimate", estimate)
-    ok("estimate created")
+    estimate_id = pick(estimate, "id")
+    ok(f"estimate created (id {estimate_id})")
 
-    step("Invoice (posts to the ledger)")
+    step("Invoice (converted from the estimate, posts to the ledger)")
     status, invoice = request(
         "POST",
         "/sale-invoices",
         {
+            # The real workflow converts an accepted estimate rather than
+            # keying the invoice in again.
+            "fromEstimateId": estimate_id,
             "customerId": customer_id,
             "invoiceDate": today.isoformat(),
             "dueDate": (today + timedelta(days=14)).isoformat(),
