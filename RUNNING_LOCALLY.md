@@ -128,6 +128,23 @@ interleaved with estimates, invoices and payments logging themselves as they hap
 Set a follow-up with a date and a note ("chase the Easter estimate, in 5 days"). Whatever is
 due also arrives by email at 7am, so it does not depend on you opening the app.
 
+## Taxes & Reserve
+
+**Sidebar → Taxes & Reserve**, or http://localhost:8080/rpw/taxes
+
+Three things on one page:
+
+- **The reserve.** Target is 25% of YTD net profit (cash basis), computed from the same P&L the
+  reports use. "Funded" is what the Tax Reserve Savings account actually holds, and the page says
+  how much to move this month to be square. A Section 179 purchase lowers profit, so the target
+  pulls back on its own.
+- **Estimated payments.** The next four federal/Ohio dates, with links to IRS Direct Pay and
+  Ohio's payment portal. Weekend-adjusted; the odd holiday shift is not modelled, so treat the
+  date as "no later than".
+- **Equipment register.** Every equipment purchase with its treatment (Sec. 179 / COGS), serial
+  numbers, and the bill of sale attached. The report counts anything missing either — that is the
+  CPA/audit checklist.
+
 ## Ohio sales tax
 
 The county rate table lives at **http://localhost:8080/rpw/sales-tax** (sidebar → Ohio Sales Tax).

@@ -38,6 +38,16 @@ export const getDashboardRoutes = () => [
     breadcrumb: 'Clients',
     pageTitle: 'Clients',
   },
+  {
+    path: '/rpw/taxes',
+    component: lazy(() =>
+      import('@/containers/RpwFinance/RpwFinancePage').then((m) => ({
+        default: m.RpwFinancePage,
+      })),
+    ),
+    breadcrumb: 'Taxes & Reserve',
+    pageTitle: 'Taxes & Reserve',
+  },
 
   // Accounts.
   {

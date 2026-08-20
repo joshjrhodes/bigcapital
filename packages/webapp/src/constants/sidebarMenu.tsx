@@ -788,6 +788,11 @@ export const SidebarMenu: SidebarMenuItem[] = [
         href: '/rpw/clients',
         type: ISidebarMenuItemType.Link,
       },
+      {
+        text: 'Taxes & Reserve',
+        href: '/rpw/taxes',
+        type: ISidebarMenuItemType.Link,
+      },
     ],
   },
 ];

@@ -66,6 +66,11 @@ payment activity, referral source, follow-ups with due/snooze/done, and a 7am em
 what is due. All of it hangs off `contacts.id` and event subscribers — no accounting module was
 modified.
 
+Phase 5 (finance extensions) is built: tax-reserve widget (25% of cash-basis YTD profit vs the
+reserve account's actual balance), equipment purchase register with Sec-179/COGS tagging, serials
+and bill-of-sale attachments, and the estimated-payment calendar. The reserve target is derived
+from upstream's own ProfitLossSheetService — no ledger math re-implemented.
+
 ## Verifying changes
 
 Never run the smoke test against the real books — it writes dummy invoices, and it refuses to.
