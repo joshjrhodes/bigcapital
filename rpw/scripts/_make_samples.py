@@ -11,6 +11,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _api import Api, fail, ok, step  # noqa: E402
 
 OUT_DIR = Path(os.environ.get("RPW_SAMPLE_DIR", Path.home()))
+# When set, the sample estimate is also emailed there — the point being to
+# exercise the app's own queued mail path, which is a different thing from SMTP
+# credentials being correct.
+EMAIL_TO = os.environ.get("RPW_SAMPLE_EMAIL", "").strip()
 EMAIL = os.environ["RPW_ADMIN_EMAIL"]
 PASSWORD = os.environ["RPW_ADMIN_PASSWORD"]
 
@@ -147,6 +151,30 @@ def main():
         target = OUT_DIR / out_name
         target.write_bytes(pdf)
         ok(f"{label} → {target} ({len(pdf):,} bytes)")
+
+    if EMAIL_TO:
+        step("Emailing the sample estimate")
+        status, state = api.get(f"/sale-estimates/{estimate_id}/mail")
+        if status != 200:
+            fail("could not read the mail defaults", state)
+        defaults = (state or {}).get("data") or state or {}
+        payload = {
+            "to": [EMAIL_TO],
+            "subject": defaults.get("subject")
+            or "Estimate from Rhodes Production Works",
+            "message": defaults.get("message") or "Please find the estimate attached.",
+            "attachEstimate": True,
+        }
+        status, resp = api.post(f"/sale-estimates/{estimate_id}/mail", payload)
+        if status not in (200, 201):
+            fail("the app could not queue the estimate email", resp)
+        ok(f"estimate queued for delivery to {EMAIL_TO}")
+        # Sending runs on a background queue, so give the worker a moment and
+        # then say plainly that the inbox is the real proof.
+        import time
+
+        time.sleep(12)
+        ok("give it a minute, then check the inbox (and spam on a first send)")
 
 
 if __name__ == "__main__":

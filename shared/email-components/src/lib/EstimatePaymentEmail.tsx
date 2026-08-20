@@ -128,15 +128,20 @@ export const EstimatePaymentEmail: React.FC<
         </Section>
 
         <Text style={estimateMessageStyle}>{message}</Text>
-        <Button
-          href={viewEstimateButtonUrl}
-          style={{
-            ...viewEstimateButtonStyle,
-            backgroundColor: primaryColor,
-          }}
-        >
-          {viewEstimateButtonLabel}
-        </Button>
+        {/* Only render when there is a destination: upstream leaves this URL
+            empty, and an inert button that looks like a call to action is
+            worse than no button. */}
+        {viewEstimateButtonUrl ? (
+          <Button
+            href={viewEstimateButtonUrl}
+            style={{
+              ...viewEstimateButtonStyle,
+              backgroundColor: primaryColor,
+            }}
+          >
+            {viewEstimateButtonLabel}
+          </Button>
+        ) : null}
 
         <Section style={totalsSectionStyle}>
           {items.map((item, index) => (

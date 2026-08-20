@@ -16,6 +16,12 @@ export class GetEstimateMailTemplateAttributesTransformer extends Transformer {
       'dueDate',
       'dueDateLabel',
 
+      // The estimate email renders an expiration date, and this transformer
+      // computes one — but it was never in this list, so the component fell
+      // back to its hardcoded '12/12/2021' placeholder on every estimate sent.
+      'expirationDate',
+      'expirationDateLabel',
+
       'estimateNumber',
       'estimateNumberLabel',
 

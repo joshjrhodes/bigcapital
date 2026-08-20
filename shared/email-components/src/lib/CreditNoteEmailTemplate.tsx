@@ -119,15 +119,20 @@ export const CreditNoteEmailTemplate: React.FC<
           </Section>
 
           <Text style={messageStyle}>{message}</Text>
-          <Button
-            href={viewButtonUrl}
-            style={{
-              ...viewInvoiceButtonStyle,
-              backgroundColor: primaryColor,
-            }}
-          >
-            {viewButtonLabel}
-          </Button>
+          {/* Only render when there is a destination: upstream leaves this URL
+              empty, and an inert button that looks like a call to action is
+              worse than no button. */}
+          {viewButtonUrl ? (
+            <Button
+              href={viewButtonUrl}
+              style={{
+                ...viewInvoiceButtonStyle,
+                backgroundColor: primaryColor,
+              }}
+            >
+              {viewButtonLabel}
+            </Button>
+          ) : null}
 
           <Section style={totalsSectionStyle}>
             {items.map((item, index) => (

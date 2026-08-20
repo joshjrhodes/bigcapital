@@ -142,15 +142,20 @@ export const InvoicePaymentEmail: React.FC<
           </Section>
 
           <Text style={invoiceMessageStyle}>{invoiceMessage}</Text>
-          <Button
-            href={viewInvoiceButtonUrl}
-            style={{
-              ...viewInvoiceButtonStyle,
-              backgroundColor: primaryColor,
-            }}
-          >
-            {viewInvoiceButtonLabel}
-          </Button>
+          {/* Only render when there is a destination: upstream leaves this URL
+              empty, and an inert button that looks like a call to action is
+              worse than no button. */}
+          {viewInvoiceButtonUrl ? (
+            <Button
+              href={viewInvoiceButtonUrl}
+              style={{
+                ...viewInvoiceButtonStyle,
+                backgroundColor: primaryColor,
+              }}
+            >
+              {viewInvoiceButtonLabel}
+            </Button>
+          ) : null}
 
           <Section style={totalsSectionStyle}>
             {items.map((item, index) => (
