@@ -41,7 +41,7 @@ loses nothing.
 ## Log in
 
 - **URL:** http://localhost:8080
-- **Email:** `josh@rhodesproductionworks.com`
+- **Email:** `josh@rhodespw.com`
 - **Password:** in `~/rpw-first-login.txt` — change it after signing in, then delete that file.
 
 These are the real books: RPW's chart of accounts, starter items, and the branded invoice
@@ -118,14 +118,19 @@ Nightly backups include them automatically.
 
 ## Email
 
-Add your Zoho app-specific password to `MAIL_PASSWORD` in `.env`, then:
+Sending needs **Zoho Mail Lite or above** — the Forever Free plan blocks SMTP entirely, which shows
+up as `535 Authentication Failed` no matter how correct the password is. The mailbox is
+`josh@rhodespw.com`; `rhodesproductionworks.com` has no mail records at all.
+
+Once the plan is upgraded, generate an app-specific password at accounts.zoho.com → Security →
+App Passwords, then:
 
 ```bash
-python3 rpw/scripts/test_email.py --send
+bash rpw/scripts/set-mail-password.sh
 ```
 
-That authenticates against Zoho and sends you a test message, so you know deliverability works
-before an invoice depends on it.
+It prompts for the password without echoing it, saves it, restarts the API and offers to send a
+test message. To re-test later: `python3 rpw/scripts/test_email.py --send`.
 
 ---
 

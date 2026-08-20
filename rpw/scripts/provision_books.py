@@ -23,7 +23,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _api import Api, fail, ok, skip, step  # noqa: E402
 
-EMAIL = os.environ.get("RPW_ADMIN_EMAIL", "josh@rhodesproductionworks.com")
+# The Zoho mailbox lives on rhodespw.com; rhodesproductionworks.com has no MX
+# records. Using a real mailbox matters for password resets.
+EMAIL = os.environ.get("RPW_ADMIN_EMAIL", "josh@rhodespw.com")
 ORG_NAME = os.environ.get("RPW_ORG_NAME", "Rhodes Production Works LTD")
 CREDENTIALS_FILE = Path(os.environ.get("RPW_CREDENTIALS_FILE", Path.home() / "rpw-first-login.txt"))
 
