@@ -135,10 +135,31 @@ function withItemsSuggestLogic<C extends ComponentType<any>>(
     const handleCreateItemSelect = useCallback(
       (item: ItemSuggestModel | Partial<ItemSuggestModel>) => {
         if (!('id' in item) || !item.id) {
-          openDrawer(DRAWERS.QUICK_CREATE_ITEM);
+          // Carry the typed name into the drawer so it opens half-filled.
+          openDrawer(DRAWERS.QUICK_CREATE_ITEM, { name: item?.name });
         }
       },
       [openDrawer],
+    );
+
+    // ── RPW ── When a caller supplies its own onItemSelect (the invoice and
+    // estimate line cells do), it overrides this component's internal
+    // dispatch — so clicking "Create «name»" handed the caller an item with
+    // no id and silently did nothing. Route create-items to the drawer BEFORE
+    // the caller sees the selection; leave callers without onItemSelect on
+    // the untouched internal path.
+    const { onItemSelect: callerOnItemSelect, ...restSuggestProps } =
+      suggestProps as Record<string, any>;
+
+    const guardedOnItemSelect = useCallback(
+      (item: any, ...rest: any[]) => {
+        if (!item || !('id' in item) || !item.id) {
+          handleCreateItemSelect(item ?? {});
+          return;
+        }
+        callerOnItemSelect?.(item, ...rest);
+      },
+      [callerOnItemSelect, handleCreateItemSelect],
     );
 
     const maybeCreateNewItemRenderer = allowCreate
@@ -164,7 +185,8 @@ function withItemsSuggestLogic<C extends ComponentType<any>>(
       createNewItemRenderer: maybeCreateNewItemRenderer,
       createNewItemFromQuery: maybeCreateNewItemFromQuery,
       createNewItemPosition: 'top' as const,
-      ...suggestProps,
+      ...restSuggestProps,
+      ...(callerOnItemSelect ? { onItemSelect: guardedOnItemSelect } : {}),
     } as ComponentProps<C>;
 
     return <Component {...processedSuggestProps} />;
