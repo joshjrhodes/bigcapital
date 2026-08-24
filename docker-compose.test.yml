@@ -26,6 +26,18 @@ services:
       # A scratch stack must never be reachable by anything that matters, and
       # the smoke test needs to be able to register its own account.
       - SIGNUP_DISABLED=false
+      # No real mail credentials in a scratch stack. The smoke test signs up
+      # fake addresses (smoke-test@…), and with the real SMTP password
+      # inherited from .env their welcome mails went out through Josh's actual
+      # Zoho account and bounced. Empty by default; make_sample_pdfs.sh passes
+      # the real values through ONLY when an email test is explicitly asked for.
+      - MAIL_HOST=${RPW_TEST_MAIL_HOST:-}
+      - MAIL_PORT=${RPW_TEST_MAIL_PORT:-}
+      - MAIL_SECURE=${RPW_TEST_MAIL_SECURE:-}
+      - MAIL_USERNAME=${RPW_TEST_MAIL_USERNAME:-}
+      - MAIL_PASSWORD=${RPW_TEST_MAIL_PASSWORD:-}
+      - MAIL_FROM_NAME=${RPW_TEST_MAIL_FROM_NAME:-}
+      - MAIL_FROM_ADDRESS=${RPW_TEST_MAIL_FROM_ADDRESS:-}
 
   webapp:
     container_name: rpwtest-webapp

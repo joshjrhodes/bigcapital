@@ -34,6 +34,19 @@ cleanup() {
 }
 trap cleanup EXIT
 
+if [ -n "${RPW_SAMPLE_EMAIL:-}" ]; then
+  # The email test needs real SMTP inside the scratch stack — pass the laptop's
+  # mail settings through for this run only. Without RPW_SAMPLE_EMAIL the
+  # scratch stack has no mail credentials at all and cannot send anything.
+  export RPW_TEST_MAIL_HOST="$(grep '^MAIL_HOST=' .env | cut -d= -f2-)"
+  export RPW_TEST_MAIL_PORT="$(grep '^MAIL_PORT=' .env | cut -d= -f2-)"
+  export RPW_TEST_MAIL_SECURE="$(grep '^MAIL_SECURE=' .env | cut -d= -f2-)"
+  export RPW_TEST_MAIL_USERNAME="$(grep '^MAIL_USERNAME=' .env | cut -d= -f2-)"
+  export RPW_TEST_MAIL_PASSWORD="$(grep '^MAIL_PASSWORD=' .env | cut -d= -f2-)"
+  export RPW_TEST_MAIL_FROM_NAME="$(grep '^MAIL_FROM_NAME=' .env | cut -d= -f2-)"
+  export RPW_TEST_MAIL_FROM_ADDRESS="$(grep '^MAIL_FROM_ADDRESS=' .env | cut -d= -f2-)"
+fi
+
 log "Starting a scratch stack on port $PORT"
 docker compose -p "$PROJECT" up -d
 
