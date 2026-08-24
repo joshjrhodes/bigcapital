@@ -7,6 +7,8 @@ import {
   FInputGroup,
   FTextArea,
 } from '@/components';
+// ── RPW ──
+import { CopyBillingToShipping } from '@/containers/RpwShared/CopyBillingToShipping';
 
 export function VendorShippingAddress() {
   return (
@@ -14,6 +16,7 @@ export function VendorShippingAddress() {
       <VendorFormSectionTitle>
         <T id={'shipping_address'} />
       </VendorFormSectionTitle>
+      <CopyBillingToShipping />
       <FFormGroup
         name={'shippingAddressCountry'}
         label={intl.get('country')}
