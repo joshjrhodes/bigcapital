@@ -99,7 +99,7 @@ export function CustomerFormBasicSection() {
       <Divider style={{ margin: '20px 0' }} />
 
       {/*------------ Vendor email -----------*/}
-      <FFormGroup name={'email'} label={intl.get('vendor_email')} inline>
+      <FFormGroup name={'email'} label={intl.get('email')} inline>
         <FInputGroup name={'email'} leftIcon={<Icon icon="envelope" />} />
       </FFormGroup>
 

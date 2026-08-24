@@ -164,8 +164,13 @@ export function RpwCrmPage() {
 
         {customers.length === 0 ? (
           <Callout intent={Intent.PRIMARY}>
-            No customers yet. Create one in Sales → Customers and they will show
-            up here.
+            <p>No customers yet.</p>
+            <Button
+              intent={Intent.PRIMARY}
+              onClick={() => (window.location.href = '/customers/new')}
+            >
+              Add your first customer
+            </Button>
           </Callout>
         ) : (
           <>
@@ -181,6 +186,14 @@ export function RpwCrmPage() {
                   </option>
                 ))}
               </HTMLSelect>
+              <Button
+                small
+                minimal
+                icon="plus"
+                onClick={() => (window.location.href = '/customers/new')}
+              >
+                Add customer
+              </Button>
             </div>
 
             <div style={{ display: 'flex', gap: 24, marginTop: 16, flexWrap: 'wrap' }}>
