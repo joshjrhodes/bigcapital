@@ -8,7 +8,7 @@ import { useFormikContext } from 'formik';
  * For most of Josh's install jobs the two are the same building, and typing an
  * address twice is exactly the kind of friction that makes records go stale.
  *
- * Works on any form whose fields follow the billingAddress*/shippingAddress*
+ * Works on any form whose fields follow the billingAddressX / shippingAddressX
  * naming both the customer and vendor forms share.
  */
 const ADDRESS_FIELDS = [
