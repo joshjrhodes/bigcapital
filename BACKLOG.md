@@ -40,3 +40,17 @@ from different companies. Branding the email body to match is a contained job.
 The email header logo needs a publicly reachable image URL; ours is on the
 internal Docker network. Same root cause as the disabled "View Estimate" button
 — both resolve when Phase 2 gives the app a public hostname.
+
+## Stale browser state renders a blank /setup instead of the login page (2026-08-24)
+
+When the SPA boots with a stored organization id that no longer exists, every
+API call answers 401 "Organization not found" — and the app routes to the
+setup wizard, which renders nothing, instead of clearing its state and showing
+the login page. Hit by Josh after the Aug 19 org rebuild; any restore or
+rebuild reproduces it. Upstream bug; the right fix is boot-level: a 401 with
+ORGANIZATION-flavoured errors should wipe local auth state and land on /auth/login.
+Workaround: DevTools → Application → Clear site data.
+
+Related: the auth throttle group (30 req/min shared across everything behind
+Envoy) was raised to 600 in .env on 2026-08-24 — at Phase 2, rate limiting
+belongs at the Cloudflare edge instead, keyed on real client IPs.
