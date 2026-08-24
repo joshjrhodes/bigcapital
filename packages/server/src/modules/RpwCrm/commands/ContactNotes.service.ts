@@ -27,6 +27,33 @@ export class ContactNotesService {
   }
 
   /**
+   * Marks a customer tax-exempt (or clears it), with the reason and the STEC
+   * certificate that makes it defensible.
+   */
+  public async setTaxExemption(
+    contactId: number,
+    values: {
+      isTaxExempt: boolean;
+      taxExemptionReason?: string;
+      taxExemptionCertificateKey?: string;
+    },
+  ) {
+    const patch = {
+      isTaxExempt: values.isTaxExempt,
+      taxExemptionReason: values.isTaxExempt ? values.taxExemptionReason ?? null : null,
+      taxExemptionCertificateKey: values.isTaxExempt
+        ? values.taxExemptionCertificateKey ?? null
+        : null,
+    };
+    const existing = await this.getProfile(contactId);
+
+    if (existing) {
+      return this.profileModel().query().patchAndFetchById(existing.id, patch);
+    }
+    return this.profileModel().query().insertAndFetch({ contactId, ...patch });
+  }
+
+  /**
    * Sets the referral source. Referrals drive this business, so "who sent them"
    * is worth keeping even when nothing else about the customer changes.
    */

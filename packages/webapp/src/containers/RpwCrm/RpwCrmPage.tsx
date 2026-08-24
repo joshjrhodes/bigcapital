@@ -12,8 +12,11 @@ import {
   TextArea,
 } from '@blueprintjs/core';
 import { DashboardPageContent } from '@/components';
+import { Checkbox, FileInput, AnchorButton } from '@blueprintjs/core';
 import {
   useAddRpwNote,
+  useSetRpwTaxExemption,
+  useUploadExemptionCertificate,
   useCompleteRpwFollowUp,
   useCreateRpwFollowUp,
   useRpwCrmCustomers,
@@ -79,6 +82,8 @@ export function RpwCrmPage() {
 
   const { mutateAsync: addNote } = useAddRpwNote();
   const { mutateAsync: setReferralSource } = useSetRpwReferralSource();
+  const { mutateAsync: setTaxExemption } = useSetRpwTaxExemption();
+  const uploadCertificate = useUploadExemptionCertificate();
   const { mutateAsync: createFollowUp } = useCreateRpwFollowUp();
   const { mutateAsync: completeFollowUp } = useCompleteRpwFollowUp();
   const { mutateAsync: snoozeFollowUp } = useSnoozeRpwFollowUp();
@@ -263,7 +268,85 @@ export function RpwCrmPage() {
                 </label>
 
                 <div style={{ marginTop: 20 }}>
-                  <h4 style={{ marginBottom: 6 }}>Set a follow-up</h4>
+                  <h4 style={{ marginBottom: 6 }}>Sales tax</h4>
+                  <Checkbox
+                    checked={Boolean(customer?.isTaxExempt)}
+                    label="Tax exempt (church, school, nonprofit…)"
+                    onChange={(event) => {
+                      const exempt = event.currentTarget.checked;
+                      run(() =>
+                        setTaxExemption([
+                          contactId,
+                          {
+                            isTaxExempt: exempt,
+                            taxExemptionReason: customer?.taxExemptionReason,
+                            taxExemptionCertificateKey:
+                              customer?.taxExemptionCertificateKey,
+                          },
+                        ]),
+                      );
+                    }}
+                  />
+                  {Boolean(customer?.isTaxExempt) && (
+                    <>
+                      <InputGroup
+                        placeholder="Reason (e.g. STEC-B blanket certificate)"
+                        defaultValue={customer?.taxExemptionReason || ''}
+                        onBlur={(event) =>
+                          run(() =>
+                            setTaxExemption([
+                              contactId,
+                              {
+                                isTaxExempt: true,
+                                taxExemptionReason: event.target.value,
+                                taxExemptionCertificateKey:
+                                  customer?.taxExemptionCertificateKey,
+                              },
+                            ]),
+                          )
+                        }
+                      />
+                      <div style={{ display: 'flex', gap: 6, marginTop: 6, alignItems: 'center' }}>
+                        <FileInput
+                          text="Exemption certificate…"
+                          onInputChange={(event) => {
+                            const file = event.target.files?.[0];
+                            if (!file) return;
+                            run(async () => {
+                              const key = await uploadCertificate(file);
+                              await setTaxExemption([
+                                contactId,
+                                {
+                                  isTaxExempt: true,
+                                  taxExemptionReason: customer?.taxExemptionReason,
+                                  taxExemptionCertificateKey: key,
+                                },
+                              ]);
+                            });
+                          }}
+                        />
+                        {customer?.taxExemptionCertificateKey && (
+                          <AnchorButton
+                            small
+                            minimal
+                            href={`/api/attachments/${encodeURIComponent(
+                              customer.taxExemptionCertificateKey,
+                            )}`}
+                            target="_blank"
+                          >
+                            View
+                          </AnchorButton>
+                        )}
+                      </div>
+                      <p className={Classes.TEXT_MUTED} style={{ marginTop: 6 }}>
+                        Nothing is taxed until collection is switched on; when it
+                        is, exempt customers are skipped automatically. Keep the
+                        certificate on file — that is what an audit asks for.
+                      </p>
+                    </>
+                  )}
+
+                  <h4 style={{ marginBottom: 6, marginTop: 16 }}>Set a follow-up</h4>
                   <InputGroup
                     placeholder="Chase the Easter estimate"
                     value={followUpNote}

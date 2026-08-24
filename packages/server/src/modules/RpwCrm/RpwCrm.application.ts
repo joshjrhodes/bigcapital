@@ -35,6 +35,10 @@ export class RpwCrmApplication {
     return this.notes.setReferralSource(contactId, referralSource);
   }
 
+  public setTaxExemption(contactId: number, values: any) {
+    return this.notes.setTaxExemption(contactId, values);
+  }
+
   public createFollowUp(values: any) {
     return this.followUps.create(values);
   }

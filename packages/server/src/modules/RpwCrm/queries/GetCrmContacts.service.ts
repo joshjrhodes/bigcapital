@@ -36,6 +36,10 @@ export class RpwCrmContactsService {
       email: (contact as any).email,
       workPhone: (contact as any).workPhone,
       referralSource: byContact.get(contact.id)?.referralSource ?? null,
+      isTaxExempt: Boolean(byContact.get(contact.id)?.isTaxExempt),
+      taxExemptionReason: byContact.get(contact.id)?.taxExemptionReason ?? null,
+      taxExemptionCertificateKey:
+        byContact.get(contact.id)?.taxExemptionCertificateKey ?? null,
     }));
   }
 

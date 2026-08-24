@@ -14,6 +14,7 @@ import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { RpwCrmApplication } from './RpwCrm.application';
 import {
   AddNoteDto,
+  SetTaxExemptionDto,
   CreateFollowUpDto,
   SetReferralSourceDto,
   SnoozeFollowUpDto,
@@ -67,6 +68,18 @@ export class RpwCrmController {
     @Body() dto: SetReferralSourceDto,
   ) {
     return this.application.setReferralSource(contactId, dto.referralSource);
+  }
+
+  @Put('customers/:id/tax-exemption')
+  @ApiOperation({
+    summary:
+      'Marks a customer tax-exempt, with the reason and STEC certificate on file.',
+  })
+  public setTaxExemption(
+    @Param('id', ParseIntPipe) contactId: number,
+    @Body() dto: SetTaxExemptionDto,
+  ) {
+    return this.application.setTaxExemption(contactId, dto);
   }
 
   @Get('customers/:id/follow-ups')

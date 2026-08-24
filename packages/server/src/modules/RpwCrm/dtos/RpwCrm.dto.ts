@@ -22,6 +22,25 @@ export class SetReferralSourceDto {
   referralSource: string;
 }
 
+export class SetTaxExemptionDto {
+  @ApiProperty({ example: true })
+  isTaxExempt: boolean;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  @ApiPropertyOptional({ example: 'Church — Ohio STEC-B blanket certificate' })
+  taxExemptionReason?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  @ApiPropertyOptional({
+    description: 'Object-storage key of the exemption certificate, from POST /attachments',
+  })
+  taxExemptionCertificateKey?: string;
+}
+
 export class CreateFollowUpDto {
   @IsOptional()
   @IsInt()

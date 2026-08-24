@@ -54,3 +54,13 @@ Workaround: DevTools → Application → Clear site data.
 Related: the auth throttle group (30 req/min shared across everything behind
 Envoy) was raised to 600 in .env on 2026-08-24 — at Phase 2, rate limiting
 belongs at the Cloudflare edge instead, keyed on real client IPs.
+
+## Sales-tax activation must respect customer exemption (2026-08-24)
+
+Customer tax exemption (flag + reason + STEC certificate) is now captured on
+rpw_contact_profiles and editable from the Clients page. When collection is
+eventually switched on, the document-level tax application MUST check the
+customer's is_tax_exempt before applying a county rate, and the county
+remittance report should break out exempt sales separately. Nothing applies
+tax today, so nothing can currently get this wrong — this note is the tripwire
+so activation cannot ship without it.

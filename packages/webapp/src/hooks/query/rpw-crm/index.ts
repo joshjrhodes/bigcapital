@@ -84,6 +84,30 @@ export function useSetRpwReferralSource() {
   });
 }
 
+export function useSetRpwTaxExemption() {
+  const queryClient = useQueryClient();
+  const apiRequest = useApiRequest();
+  return useMutation({
+    mutationFn: ([contactId, values]: [number, Record<string, any>]) =>
+      apiRequest.put(`rpw/crm/customers/${contactId}/tax-exemption`, values),
+    onSuccess: () => invalidate(queryClient),
+  });
+}
+
+/** Uploads an exemption certificate and resolves to its storage key. */
+export function useUploadExemptionCertificate() {
+  const apiRequest = useApiRequest();
+
+  return async (file: File): Promise<string> => {
+    const form = new FormData();
+    form.append('file', file);
+    const response = await apiRequest.post('attachments', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data?.data?.key;
+  };
+}
+
 export function useCreateRpwFollowUp() {
   const queryClient = useQueryClient();
   const apiRequest = useApiRequest();
