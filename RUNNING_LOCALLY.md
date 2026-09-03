@@ -1,19 +1,26 @@
 # RUNNING_LOCALLY.md — the commands Josh types
 
-Everything runs in Docker. Open **Ubuntu (WSL)** from the Start menu, then:
+## The short version
 
-```bash
-cd ~/rpw
-```
+**Double-click "RPW Books" on the Windows desktop.** It starts Docker if needed, brings the
+books up, waits until they answer, and opens the browser. After a reboot it takes a minute or
+two; if everything is already running it opens near-instantly. That is the whole routine.
 
-Docker Desktop must be running first (its whale icon in the system tray). If it isn't, start it and
-give it ~30 seconds.
+(A copy of the script lives in `rpw/windows/RPW Books.bat` — if the desktop one ever goes
+missing, copy it back from there.)
+
+Everything below is the manual version of what that button does, for when something needs
+poking by hand.
 
 ---
 
-## Start it
+## Start it by hand
+
+Open **Ubuntu (WSL)** from the Start menu (Docker Desktop must be running — whale icon in the
+system tray):
 
 ```bash
+cd ~/rpw
 docker compose up -d
 ```
 
