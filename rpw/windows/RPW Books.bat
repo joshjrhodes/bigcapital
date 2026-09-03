@@ -38,7 +38,7 @@ rem ── 4. Wait for the app to answer ──
 echo  Waiting for the app...
 set /a tries=0
 :waitapp
-curl.exe -s -f -o NUL http://localhost:8080/ >NUL 2>&1
+curl.exe -s -f -o NUL http://localhost:8080/api/auth/meta >NUL 2>&1
 if not errorlevel 1 goto appup
 set /a tries+=1
 if %tries% GEQ 60 goto fail_app
@@ -46,6 +46,9 @@ timeout /t 3 /nobreak >NUL
 goto waitapp
 
 :appup
+rem Give the SPA a beat after the API answers, so the first page load
+rem cannot race a half-booted backend into the blank setup screen.
+timeout /t 3 /nobreak >NUL
 echo.
 echo  Ready! Opening your books...
 start http://localhost:8080
