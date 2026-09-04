@@ -166,7 +166,12 @@ export function useApiFetcher(options?: {
       baseUrl: '',
       init: { headers },
       disableCamelCaseTransform: !options?.enableCamelCaseTransform,
-      // onError,
+      // RPW: upstream built this handler, listed it in the deps below, and left
+      // the hookup commented out — so an expired session never logged out.
+      // Every SDK query then failed 401 quietly, the organization read stayed
+      // empty, and the app dead-ended on a blank /setup instead of the login
+      // page. Bit Josh three times before it was traced here.
+      onError,
     });
   }, [
     token,
